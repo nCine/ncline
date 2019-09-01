@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.8.2)
+
+project(cpptoml-download NONE)
+
+include(ExternalProject)
+ExternalProject_Add(cpptoml
+	GIT_REPOSITORY    https://github.com/skystrife/cpptoml.git
+	GIT_TAG           "v0.1.1"
+	GIT_SHALLOW       TRUE
+	SOURCE_DIR        "${CMAKE_BINARY_DIR}/cpptoml-src"
+	CONFIGURE_COMMAND ""
+	BUILD_COMMAND     ""
+	INSTALL_COMMAND   ""
+	TEST_COMMAND      ""
+)
