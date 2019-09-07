@@ -1,8 +1,6 @@
 #pragma once
 
-#include <string>
-
-/// A class to execute a process and get its output
+/// A class to execute a process and retrieve its output
 class Process
 {
   public:
@@ -12,8 +10,15 @@ class Process
 		ENABLED
 	};
 
-	static bool executeCommand(const char *command) { return executeCommand(command, Echo::ENABLED); }
+#ifdef _WIN32
+	static void setupJobObject();
+#endif
+
+	static bool executeCommand(const char *command);
 	static bool executeCommand(const char *command, Echo echoMode);
-	static bool executeCommand(const char *command, std::string &output) { return executeCommand(command, output, Echo::ENABLED); }
+	static bool executeCommand(const char *command, std::string &output);
 	static bool executeCommand(const char *command, std::string &output, Echo echoMode);
+
+  private:
+	static bool executeCommand(const char *command, std::string *output, Echo echoMode);
 };

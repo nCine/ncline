@@ -3,6 +3,8 @@
 #include "Settings.h"
 #include "GitCommand.h"
 #include "CMakeCommand.h"
+#include "Process.h"
+#include "Helpers.h"
 
 #include "DownloadMode.h"
 #include "ConfMode.h"
@@ -12,26 +14,54 @@ int main(int argc, char **argv)
 {
 	Settings settings;
 	const bool parsed = settings.parseArguments(argc, argv);
-	//settings.print();
-	config().save();
-
 	if (parsed == false)
 		return EXIT_FAILURE;
+	config().save();
 
-	GitCommand git("git");
-	if (git.found() == false)
-		std::cerr << "Cannot found git executable: \"" << git.executable() << "\"";
-
-	CMakeCommand cmake("cmake");
-	if (cmake.found() == false)
-		std::cerr << "Cannot found cmake executable: \"" << cmake.executable() << "\"";
-
-	switch (settings.mode())
+	if (settings.mode() == Settings::Mode::SET)
+		config().print();
+	else if (settings.mode() != Settings::Mode::HELP &&
+	         settings.mode() != Settings::Mode::VERSION)
 	{
-		case Settings::Mode::DOWNLOAD: DownloadMode::perform(git, settings); break;
-		case Settings::Mode::CONF: ConfMode::perform(cmake, settings); break;
-		case Settings::Mode::BUILD: BuildMode::perform(cmake, settings); break;
-		default: break;
+#ifdef _WIN32
+		Process::setupJobObject();
+#endif
+
+		GitCommand git;
+		if (git.found() == false)
+			Helpers::error("Cannot find Git executable: ", git.executable().data());
+		else
+			Helpers::info("Git executable found: ", git.executable().data());
+
+		CMakeCommand cmake;
+		if (cmake.found() == false)
+			Helpers::error("Cannot find CMake executable: ", cmake.executable().data());
+		else
+		{
+			if (cmake.isUpdated() == false)
+				Helpers::error("Old version of CMake executable found: ", cmake.executable().data());
+			else
+				Helpers::info("CMake executable found: ", cmake.executable().data());
+		}
+
+		if (config().withNinja())
+		{
+			if (cmake.ninjaFound() == false)
+				Helpers::error("Cannot find Ninja executable: ", cmake.ninjaExecutable().data());
+			else
+				Helpers::info("Ninja executable found: ", cmake.ninjaExecutable().data());
+		}
+
+		if (git.found() && cmake.found())
+		{
+			switch (settings.mode())
+			{
+				case Settings::Mode::DOWNLOAD: DownloadMode::perform(git, settings); break;
+				case Settings::Mode::CONF: ConfMode::perform(cmake, settings); break;
+				case Settings::Mode::BUILD: BuildMode::perform(cmake, settings); break;
+				default: break;
+			}
+		}
 	}
 
 	return EXIT_SUCCESS;

@@ -3,28 +3,44 @@
 #include "BuildMode.h"
 #include "CMakeCommand.h"
 #include "Settings.h"
+#include "Helpers.h"
 
 namespace {
 
-const char *nCineLibrariesSourceDir = "nCine-libraries";
-const char *nCineSourceDir = "nCine";
+const char *settingsToBuildConfigString(Settings::BuildType buildType)
+{
+	switch (buildType)
+	{
+		case Settings::BuildType::DEBUG: return "debug";
+		case Settings::BuildType::RELEASE: return "release";
+	}
+	return nullptr;
+}
 
 void buildLibraries(CMakeCommand &cmake, const Settings &settings)
 {
-	std::cout << "-> Build the libraries\n";
+	Helpers::info("Build the libraries");
 
-	std::string buildDir = nCineLibrariesSourceDir;
-	buildDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
-	cmake.build(buildDir.data());
+	std::string buildDir = Helpers::nCineLibrariesSourceDir();
+	Helpers::buildDir(buildDir, settings);
+
+	if (CMakeCommand::generatorIsMultiConfig())
+		cmake.buildConfig(buildDir.data(), settingsToBuildConfigString(settings.buildType()));
+	else
+		cmake.build(buildDir.data());
 }
 
 void buildEngine(CMakeCommand &cmake, const Settings &settings)
 {
-	std::cout << "-> Build the engine\n";
+	Helpers::info("Build the engine");
 
-	std::string buildDir = nCineSourceDir;
-	buildDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
-	cmake.build(buildDir.data());
+	std::string buildDir = Helpers::nCineSourceDir();
+	Helpers::buildDir(buildDir, settings);
+
+	if (CMakeCommand::generatorIsMultiConfig())
+		cmake.buildConfig(buildDir.data(), settingsToBuildConfigString(settings.buildType()));
+	else
+		cmake.build(buildDir.data());
 }
 
 }

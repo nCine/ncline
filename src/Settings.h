@@ -12,7 +12,8 @@ class Settings
 		BUILD,
 		DIST,
 
-		HELP
+		HELP,
+		VERSION
 	};
 
 	enum class DownloadMode
@@ -43,7 +44,6 @@ class Settings
 	};
 
 	bool parseArguments(int argc, char **argv);
-	void print();
 
 	inline Mode mode() const { return mode_; }
 	inline DownloadMode downloadMode() const { return downloadMode_; }

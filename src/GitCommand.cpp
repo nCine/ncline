@@ -1,9 +1,12 @@
 #include <cassert>
 #include <cstring>
 #include <ctime>
+#include <algorithm>
 #include "GitCommand.h"
 #include "Process.h"
 #include "FileSystem.h"
+#include "Configuration.h"
+#include "Helpers.h"
 
 using fs = FileSystem;
 
@@ -12,87 +15,133 @@ namespace {
 const int MaxLength = 1024;
 char buffer[MaxLength];
 
+char *strncpyWrapper(char *dest, size_t elements, const char *source, size_t count)
+{
+#if defined(_WIN32) && !defined(__MINGW32__)
+	strncpy_s(dest, elements, source, count);
+	return dest;
+#else
+	return strncpy(dest, source, count);
+#endif
+}
+
 }
 
 ///////////////////////////////////////////////////////////
 // CONSTRUCTORS and DESTRUCTOR
 ///////////////////////////////////////////////////////////
 
-GitCommand::GitCommand(const char *executable)
-    : found_(false), executable_(executable)
+GitCommand::GitCommand()
+    : found_(false)
 {
 	output_.reserve(1024);
+
+	if (config().gitExecutable(executable_) == false)
+	{
+		if (checkPredefinedLocations() == false)
+			executable_ = "git";
+	}
+
+	if (executable_.find(' ') != std::string::npos)
+		executable_ = "\"" + executable_ + "\"";
 
 	snprintf(buffer, MaxLength, "%s --version", executable_.data());
 	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 	if (executed)
-		found_ = sscanf(output_.data(), "git version %d.%d.%d", &version_[0], &version_[1], &version_[2]);
+		found_ = sscanf(output_.data(), "git version %u.%u.%u", &version_[0], &version_[1], &version_[2]);
 }
 
 ///////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
 
-bool GitCommand::checkRepositoryVersion(const char *repository, std::string &version)
+bool GitCommand::clone(const char *repositoryUrl, const char *branch)
 {
-	std::string repositoryGitDir = fs::joinPath(repository, ".git");
+	assert(found_);
+	assert(repositoryUrl);
+	assert(branch);
+	output_.clear();
+
+	snprintf(buffer, MaxLength, "%s clone --single-branch --branch %s %s", executable_.data(), branch, repositoryUrl);
+	const bool executed = Process::executeCommand(buffer, output_);
+	return executed;
+}
+
+bool GitCommand::clone(const char *repositoryUrl)
+{
+	assert(found_);
+	assert(repositoryUrl);
+	output_.clear();
+
+	snprintf(buffer, MaxLength, "%s clone %s", executable_.data(), repositoryUrl);
+	const bool executed = Process::executeCommand(buffer, output_);
+	return executed;
+}
+
+bool GitCommand::checkRepositoryVersion(const char *repositoryDir, std::string &version)
+{
+	const std::string repositoryGitDir = fs::joinPath(repositoryDir, ".git");
 
 	if (found_ && fs::isDirectory(repositoryGitDir.data()))
 	{
-		std::string versionCommand;
 		bool executed = false;
 
-		char revCount[8];
-		char shortHash[64];
-		char lastCommitDate[32];
-		char branchName[128];
+		const unsigned int MaxLength = 128;
+		char revCount[MaxLength];
+		char shortHash[MaxLength];
+		char lastCommitDate[MaxLength];
+		char branchName[MaxLength];
 		bool hasTag = false;
-		char tagName[128];
+		char tagName[MaxLength];
 
 		output_.clear();
-		versionCommand = executable_ + " --git-dir=" + repositoryGitDir + " rev-list --count HEAD";
-		executed = Process::executeCommand(versionCommand.data(), output_);
+		snprintf(buffer, MaxLength, "%s --git-dir=%s rev-list --count HEAD", executable_.data(), repositoryGitDir.data());
+		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
-		sscanf(output_.data(), "%7s", revCount);
+		strncpyWrapper(revCount, MaxLength, output_.data(), MaxLength - 1);
 
 		output_.clear();
-		versionCommand = executable_ + " --git-dir=" + repositoryGitDir + " rev-parse --short HEAD";
-		executed = Process::executeCommand(versionCommand.data(), output_);
+		snprintf(buffer, MaxLength, "%s --git-dir=%s rev-parse --short HEAD", executable_.data(), repositoryGitDir.data());
+		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
-		sscanf(output_.data(), "%63s", shortHash);
+		strncpyWrapper(shortHash, MaxLength, output_.data(), MaxLength - 1);
 
 		output_.clear();
-		versionCommand = executable_ + " --git-dir=" + repositoryGitDir + " log -1 --format=%ad --date=format:%Y.%m";
-		executed = Process::executeCommand(versionCommand.data(), output_);
+		snprintf(buffer, MaxLength, "%s --git-dir=%s log -1 --format=%%ad --date=format:%%Y.%%m", executable_.data(), repositoryGitDir.data());
+		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
-		sscanf(output_.data(), "%31s", lastCommitDate);
+		strncpyWrapper(lastCommitDate, MaxLength, output_.data(), MaxLength - 1);
 
 		output_.clear();
-		versionCommand = executable_ + " --git-dir=" + repositoryGitDir + " rev-parse --abbrev-ref HEAD";
-		executed = Process::executeCommand(versionCommand.data(), output_);
+		snprintf(buffer, MaxLength, "%s --git-dir=%s rev-parse --abbrev-ref HEAD", executable_.data(), repositoryGitDir.data());
+		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
-		sscanf(output_.data(), "%127s", branchName);
+		strncpyWrapper(branchName, MaxLength, output_.data(), MaxLength - 1);
 
 		output_.clear();
-		versionCommand = executable_ + " --git-dir=" + repositoryGitDir + " describe --tags --exact-match HEAD";
-		hasTag = Process::executeCommand(versionCommand.data(), output_);
+		snprintf(buffer, MaxLength, "%s --git-dir=%s describe --tags --exact-match HEAD", executable_.data(), repositoryGitDir.data());
+		hasTag = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 
 		if (hasTag)
 		{
-			sscanf(output_.data(), "%127s", tagName);
+			strncpyWrapper(tagName, MaxLength, output_.data(), MaxLength - 1);
 			version = tagName;
 		}
 		else
-		{
 			version = std::string(lastCommitDate) + ".r" + std::string(revCount) + "-" + std::string(shortHash);
-		}
+
+		version.erase(std::remove(version.begin(), version.end(), '\n'), version.end());
 	}
 	else
 	{
 		time_t now = time(nullptr);
 		struct tm tstruct;
 		char timeString[80];
+#ifdef _WIN32
+		localtime_s(&tstruct, &now);
+#else
 		tstruct = *localtime(&now);
+#endif
 		strftime(timeString, sizeof(timeString), "%Y.%m.%d", &tstruct);
 		version = timeString;
 	}
@@ -100,23 +149,28 @@ bool GitCommand::checkRepositoryVersion(const char *repository, std::string &ver
 	return true;
 }
 
-bool GitCommand::clone(const char *repository, const char *branch)
+///////////////////////////////////////////////////////////
+// PRIVATE FUNCTIONS
+///////////////////////////////////////////////////////////
+
+bool GitCommand::checkPredefinedLocations()
 {
-	assert(found_);
-	assert(branch);
-	output_.clear();
+	bool isAccessible = false;
 
-	snprintf(buffer, MaxLength, "%s clone --single-branch --branch %s %s", executable_.data(), branch, repository);
-	const bool executed = Process::executeCommand(buffer, output_);
-	return executed;
-}
+#if defined(_WIN32)
+	std::string programsToGit = "Git/bin/git.exe";
 
-bool GitCommand::clone(const char *repository)
-{
-	assert(found_);
-	output_.clear();
+	if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToGit).data()))
+	{
+		executable_ = fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToGit);
+		isAccessible = true;
+	}
+	else if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToGit).data()))
+	{
+		executable_ = fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToGit);
+		isAccessible = true;
+	}
+#endif
 
-	snprintf(buffer, MaxLength, "%s clone %s", executable_.data(), repository);
-	const bool executed = Process::executeCommand(buffer, output_);
-	return executed;
+	return isAccessible;
 }

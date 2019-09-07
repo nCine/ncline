@@ -3,34 +3,52 @@
 #include "ConfMode.h"
 #include "CMakeCommand.h"
 #include "Settings.h"
+#include "Helpers.h"
 
 namespace {
 
-const char *nCineLibrariesSourceDir = "nCine-libraries";
-const char *nCineSourceDir = "nCine";
+const char *settingsToBuildTypeString(Settings::BuildType buildType)
+{
+	switch (buildType)
+	{
+		case Settings::BuildType::DEBUG: return "Debug";
+		case Settings::BuildType::RELEASE: return "Release";
+	}
+	return nullptr;
+}
 
 void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 {
-	std::cout << "-> Configure libraries\n";
+	Helpers::info("Configure the libraries");
 
-	std::string binaryDir = nCineLibrariesSourceDir;
-	binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
+	std::string buildDir = Helpers::nCineLibrariesSourceDir();
+	Helpers::buildDir(buildDir, settings);
 
-	std::string arguments = "-D CMAKE_BUILD_TYPE=";
-	arguments += (settings.buildType() == Settings::BuildType::DEBUG) ? "Debug" : "Release";
-	cmake.configure(nCineLibrariesSourceDir, binaryDir.data(), arguments.data());
+	if (CMakeCommand::generatorIsMultiConfig())
+		cmake.configure(Helpers::nCineLibrariesSourceDir(), buildDir.data());
+	else
+	{
+		std::string arguments = "-D CMAKE_BUILD_TYPE=";
+		arguments += settingsToBuildTypeString(settings.buildType());
+		cmake.configure(Helpers::nCineLibrariesSourceDir(), buildDir.data(), arguments.data());
+	}
 }
 
 void configureEngine(CMakeCommand &cmake, const Settings &settings)
 {
-	std::cout << "-> Configure the engine\n";
+	Helpers::info("Configure the engine");
 
-	std::string binaryDir = nCineSourceDir;
-	binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
+	std::string buildDir = Helpers::nCineSourceDir();
+	Helpers::buildDir(buildDir, settings);
 
-	std::string arguments = "-D CMAKE_BUILD_TYPE=";
-	arguments += (settings.buildType() == Settings::BuildType::DEBUG) ? "Debug" : "Release";
-	cmake.configure(nCineSourceDir, binaryDir.data(), arguments.data());
+	if (CMakeCommand::generatorIsMultiConfig())
+		cmake.configure(Helpers::nCineSourceDir(), buildDir.data());
+	else
+	{
+		std::string arguments = "-D CMAKE_BUILD_TYPE=";
+		arguments += settingsToBuildTypeString(settings.buildType());
+		cmake.configure(Helpers::nCineSourceDir(), buildDir.data(), arguments.data());
+	}
 }
 
 }

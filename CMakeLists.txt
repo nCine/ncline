@@ -8,10 +8,13 @@ project(ncline)
 
 set(TARGET_NAME ncline)
 add_executable(${TARGET_NAME})
+set_target_properties(${TARGET_NAME} PROPERTIES
+	CXX_STANDARD 11
+	CXX_STANDARD_REQUIRED YES
+	CXX_EXTENSIONS NO
+)
 
 include(get_version)
-#include(toml11)
-#target_include_directories(${TARGET_NAME} PRIVATE ${TOML11_SOURCE_DIR})
 include(cpptoml)
 target_include_directories(${TARGET_NAME} PRIVATE ${CPPTOML_SOURCE_DIR}/include)
 include(clipp)
@@ -48,4 +51,6 @@ target_sources(${TARGET_NAME} PRIVATE
 	src/ConfMode.cpp
 	src/BuildMode.h
 	src/BuildMode.cpp
+	src/Helpers.h
+	src/Helpers.cpp
 )

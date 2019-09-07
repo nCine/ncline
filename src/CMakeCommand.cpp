@@ -1,10 +1,13 @@
 #include <cassert>
 #include <cstring>
-#include <iostream>
 #include <thread>
 #include "CMakeCommand.h"
 #include "Process.h"
+#include "FileSystem.h"
 #include "Configuration.h"
+#include "Helpers.h"
+
+using fs = FileSystem;
 
 namespace {
 
@@ -12,29 +15,62 @@ const int MaxLength = 1024;
 // TODO: Unify buffers
 char buffer[MaxLength];
 
+#ifdef _WIN32
+const char *vsVersionToGeneratorString(int version)
+{
+	if (version == 2017)
+		return "Visual Studio 15 2017";
+	else
+		return "Visual Studio 16 2019";
+}
+#endif
+
 }
 
 ///////////////////////////////////////////////////////////
 // CONSTRUCTORS and DESTRUCTOR
 ///////////////////////////////////////////////////////////
 
-CMakeCommand::CMakeCommand(const char *executable)
-    : found_(false), ninjaFound_(false), executable_(executable)
+CMakeCommand::CMakeCommand()
+    : found_(false), ninjaFound_(false)
 {
 	output_.reserve(1024);
+
+	if (config().cmakeExecutable(executable_) == false)
+	{
+		if (checkPredefinedLocations() == false)
+			executable_ = "cmake";
+	}
+
+	if (executable_.find(' ') != std::string::npos)
+		executable_ = "\"" + executable_ + "\"";
 
 	snprintf(buffer, MaxLength, "%s --version", executable_.data());
 	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 	if (executed)
 	{
-		found_ = sscanf(output_.data(), "cmake version %d.%d.%d", &version_[0], &version_[1], &version_[2]);
-		findNinja();
+		found_ = sscanf(output_.data(), "cmake version %u.%u.%u", &version_[0], &version_[1], &version_[2]);
+
+		if (config().withNinja())
+			findNinja();
 	}
 }
 
 ///////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
+
+bool CMakeCommand::generatorIsMultiConfig()
+{
+#ifdef _WIN32
+	if (config().withMinGW())
+		return false;
+	else
+		return true;
+#else
+	return false;
+#endif
+}
 
 bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char *arguments)
 {
@@ -92,10 +128,23 @@ bool CMakeCommand::build(const char *buildDir, const char *config, const char *t
 	return executed;
 }
 
-const char *CMakeCommand::generator()
+bool CMakeCommand::isUpdated() const
 {
-#ifdef __WIN32
-	return "Visual Studio 15 2017";
+	assert(found_);
+	return Helpers::checkMinVersion(version_, 3, 13, 0);
+}
+
+///////////////////////////////////////////////////////////
+// PRIVATE FUNCTIONS
+///////////////////////////////////////////////////////////
+
+const char *CMakeCommand::generator() const
+{
+#ifdef _WIN32
+	if (config().withMinGW())
+		return "MSYS Makefiles";
+	else
+		return vsVersionToGeneratorString(config().vsVersion());
 #else
 	if (ninjaFound_ && config().withNinja())
 		return "Ninja";
@@ -104,23 +153,56 @@ const char *CMakeCommand::generator()
 #endif
 }
 
-const char *CMakeCommand::platform()
+const char *CMakeCommand::platform() const
 {
-#ifdef __WIN32
-	return "x64";
-#else
-	return nullptr;
+#ifdef _WIN32
+	if (generatorIsVisualStudio())
+		return "x64";
+	else
 #endif
+		return nullptr;
 }
 
-///////////////////////////////////////////////////////////
-// PRIVATE FUNCTIONS
-///////////////////////////////////////////////////////////
+bool CMakeCommand::checkPredefinedLocations()
+{
+	bool isAccessible = false;
+
+#if defined(_WIN32)
+	std::string programsToCmake = "CMake/bin/cmake.exe";
+
+	if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToCmake).data()))
+	{
+		executable_ = fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToCmake);
+		isAccessible = true;
+	}
+	else if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToCmake).data()))
+	{
+		executable_ = fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToCmake);
+		isAccessible = true;
+	}
+#elif defined(__APPLE__)
+	if (fs::canAccess("/Applications/CMake.app/Contents/bin/cmake"))
+	{
+		executable_ = "/Applications/CMake.app/Contents/bin/cmake";
+		isAccessible = true;
+	}
+#endif
+
+	return isAccessible;
+}
 
 void CMakeCommand::findNinja()
 {
 	output_.clear();
-	const bool executed = Process::executeCommand("ninja --version", output_, Process::Echo::DISABLED);
+
+	if (config().ninjaExecutable(ninjaExecutable_) == false)
+		ninjaExecutable_ = "ninja";
+
+	if (ninjaExecutable_.find(' ') != std::string::npos)
+		ninjaExecutable_ = "\"" + ninjaExecutable_ + "\"";
+
+	snprintf(buffer, MaxLength, "%s --version", ninjaExecutable_.data());
+	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 	if (executed)
-		ninjaFound_ = sscanf(output_.data(), "%d.%d.%d", &ninjaVersion_[0], &ninjaVersion_[1], &ninjaVersion_[2]);
+		ninjaFound_ = sscanf(output_.data(), "%u.%u.%u", &ninjaVersion_[0], &ninjaVersion_[1], &ninjaVersion_[2]);
 }

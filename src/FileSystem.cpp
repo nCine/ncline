@@ -1,6 +1,10 @@
 #include "FileSystem.h"
 
-#ifndef __WIN32
+#ifdef _WIN32
+	#define _AMD64_
+	#include <fileapi.h>
+#else
+	#include <unistd.h>
 	#include <sys/stat.h>
 #endif
 
@@ -23,8 +27,10 @@ std::string FileSystem::joinPath(const std::string &first, const std::string &se
 
 bool FileSystem::isDirectory(const char *file)
 {
-	// TODO: on Windows use GetFileAttributes
-
+#ifdef _WIN32
+	const DWORD attrs = GetFileAttributesA(file);
+	return (attrs & FILE_ATTRIBUTE_DIRECTORY);
+#else
 	struct stat sb;
 	if (lstat(file, &sb) == -1)
 	{
@@ -33,4 +39,15 @@ bool FileSystem::isDirectory(const char *file)
 	}
 	else
 		return (sb.st_mode & S_IFMT) == S_IFDIR;
+#endif
+}
+
+bool FileSystem::canAccess(const char *file)
+{
+#ifdef _WIN32
+	const DWORD attrs = GetFileAttributesA(file);
+	return (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0);
+#else
+	return (access(file, R_OK) == 0);
+#endif
 }

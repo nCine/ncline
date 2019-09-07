@@ -1,9 +1,55 @@
+#include <cassert>
 #include <iostream>
+#include <string>
 #include "Process.h"
+#include "Helpers.h"
+
+#ifdef _WIN32
+	#define WIN32_LEAN_AND_MEAN
+	#include <Windows.h>
+#endif
 
 namespace {
 
-char lineBuffer[1024];
+const int MaxLength = 1024;
+char buffer[MaxLength];
+
+FILE *popenWrapper(const char *command, const char *mode)
+{
+#ifdef _WIN32
+	// Quoting the command string before passing it to `_popen()`
+	snprintf(buffer, MaxLength, "\"%s\"", command);
+	return _popen(buffer, mode);
+#else
+	return popen(command, mode);
+#endif
+}
+
+int pcloseWrapper(FILE *stream)
+{
+#ifdef _WIN32
+	return _pclose(stream);
+#else
+	return pclose(stream);
+#endif
+}
+
+#ifdef _WIN32
+HANDLE jobObject_ = 0;
+
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+{
+	switch (fdwCtrlType)
+	{
+		case CTRL_C_EVENT:
+			Beep(750, 300);
+			TerminateJobObject(jobObject_, EXIT_FAILURE);
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+#endif
 
 }
 
@@ -11,34 +57,50 @@ char lineBuffer[1024];
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
 
+#ifdef _WIN32
+void Process::setupJobObject()
+{
+	jobObject_ = CreateJobObjectA(nullptr, "ncline");
+	const BOOL successAssign = AssignProcessToJobObject(jobObject_, GetCurrentProcess());
+	assert(successAssign);
+
+	const BOOL successHandler = SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
+	assert(successHandler);
+}
+#endif
+
+bool Process::executeCommand(const char *command)
+{
+	return executeCommand(command, nullptr, Echo::ENABLED);
+}
+
 bool Process::executeCommand(const char *command, Echo echoMode)
 {
-	if (echoMode == Echo::ENABLED)
-		std::cout << command << "\n";
+	return executeCommand(command, nullptr, echoMode);
+}
 
-	FILE *fp = popen(command, "r");
-
-	if (!fp)
-	{
-		std::cerr << "Cannot execute " << command;
-		return false;
-	}
-
-	while (fgets(lineBuffer, 512, fp))
-		std::cout << lineBuffer;
-
-	const bool readToTheEnd = feof(fp);
-	pclose(fp);
-
-	return readToTheEnd;
+bool Process::executeCommand(const char *command, std::string &output)
+{
+	return executeCommand(command, &output, Echo::ENABLED);
 }
 
 bool Process::executeCommand(const char *command, std::string &output, Echo echoMode)
 {
-	if (echoMode == Echo::ENABLED)
-		std::cout << command << "\n";
+	return executeCommand(command, &output, echoMode);
+}
 
-	FILE *fp = popen(command, "r");
+///////////////////////////////////////////////////////////
+// PRIVATE FUNCTIONS
+///////////////////////////////////////////////////////////
+
+bool Process::executeCommand(const char *command, std::string *output, Echo echoMode)
+{
+	assert(command);
+
+	if (echoMode == Echo::ENABLED)
+		Helpers::echo(command);
+
+	FILE *fp = popenWrapper(command, "r");
 
 	if (!fp)
 	{
@@ -46,11 +108,16 @@ bool Process::executeCommand(const char *command, std::string &output, Echo echo
 		return false;
 	}
 
-	while (fgets(lineBuffer, 512, fp))
-		output.append(lineBuffer);
+	while (fgets(buffer, MaxLength, fp))
+	{
+		if (output)
+			output->append(buffer);
+		if (echoMode == Echo::ENABLED)
+			std::cout << buffer << std::flush;
+	}
 
-	const bool readToTheEnd = feof(fp);
-	pclose(fp);
-
-	return readToTheEnd;
+	if (feof(fp))
+		return (pcloseWrapper(fp) == EXIT_SUCCESS);
+	else
+		return false;
 }

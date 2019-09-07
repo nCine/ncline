@@ -2,20 +2,22 @@
 #include "DownloadMode.h"
 #include "GitCommand.h"
 #include "Settings.h"
+#include "Helpers.h"
 
 namespace {
 
-const char *nCineLibrariesRepositoryUrl = "https://github.com/nCine/nCine-libraries.git";
-const char *nCineRepositoryUrl = "https://github.com/nCine/nCine.git";
-
 void downloadLibraries(GitCommand &git)
 {
-	git.clone(nCineLibrariesRepositoryUrl);
+	git.clone(Helpers::nCineLibrariesRepositoryUrl());
 }
 
 void downloadEngine(GitCommand &git)
 {
-	git.clone(nCineRepositoryUrl);
+	git.clone(Helpers::nCineDataRepositoryUrl());
+	git.clone(Helpers::nCineRepositoryUrl());
+	std::string version;
+	if (git.checkRepositoryVersion(Helpers::nCineSourceDir(), version))
+		Helpers::info("Repository at version: ", version.data());
 }
 
 }
