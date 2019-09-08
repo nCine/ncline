@@ -11,6 +11,14 @@ class table;
 class Configuration
 {
   public:
+	enum class Compiler
+	{
+		GCC,
+		CLANG,
+
+		UNSPECIFIED
+	};
+
 	Configuration();
 
 	bool withColors() const;
@@ -29,6 +37,12 @@ class Configuration
 	unsigned int vsVersion() const;
 	void setVsVersion(unsigned int version);
 
+	bool branchName(std::string &value) const;
+	void setBranchName(const std::string &value);
+
+	Compiler compiler() const;
+	void setCompiler(Compiler compiler);
+
 	void print() const;
 	void save();
 
@@ -36,6 +50,7 @@ class Configuration
 	std::shared_ptr<cpptoml::table> root_;
 	std::shared_ptr<cpptoml::table> gitSection_;
 	std::shared_ptr<cpptoml::table> cmakeSection_;
+	std::shared_ptr<cpptoml::table> ncineSection_;
 
 	void retrieveSections();
 };

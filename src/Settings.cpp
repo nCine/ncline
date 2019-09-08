@@ -33,16 +33,24 @@ bool Settings::parseArguments(int argc, char **argv)
 	                    option("-vs2019").call([] { config().setVsVersion(2019); })
 	                ).doc("(do not) use MinGW/MSYS environment to configure and build"),
 #endif
+#ifndef __APPLE__
+	                (
+	                    option("-gcc").call([] { config().setCompiler(Configuration::Compiler::GCC); }) |
+	                    option("-clang").call([] { config().setCompiler(Configuration::Compiler::CLANG); })
+	                ).doc("prefer GCC or Clang to compile on Linux and MinGW"),
+#endif
 	                (
 	                    option("-colors").call([] { config().setWithColors(true); }) |
 	                    option("-no-colors").call([] { config().setWithColors(false); })
-	                ).doc("(do not) use shell colors in the output")
+	                ).doc("(do not) use shell colors in the output"),
+	                option("-branch") & value("name").call([&](const std::string &branchName) { config().setBranchName(branchName); }).doc("branch name for engine and projects")
 	               );
 
 	auto downloadMode = (command("download").set(mode_, Mode::DOWNLOAD).doc("download mode"),
 	                     command("libs").set(downloadMode_, DownloadMode::LIBS) |
 	                     command("engine").set(downloadMode_, DownloadMode::ENGINE) |
-	                     command("game").set(downloadMode_, DownloadMode::GAME));
+	                     command("game").set(downloadMode_, DownloadMode::GAME),
+	                     option("-artifact").set(downloadArtifact_, true).doc("download the C.I. compiled artifact instead of source code"));
 
 	auto confMode = (command("conf").set(mode_, Mode::CONF).doc("configuration mode"),
 	                 command("libs").set(confMode_, ConfMode::LIBS) |

@@ -7,8 +7,12 @@ class GitCommand
   public:
 	GitCommand();
 
+	bool clone(const char *repositoryUrl, const char *branch, unsigned int depth, bool noCheckout);
+	inline bool clone(const char *repositoryUrl, const char *branch, unsigned int depth) { return clone(repositoryUrl, branch, depth, false); }
+	inline bool clone(const char *repositoryUrl, const char *branch) { return clone(repositoryUrl, branch, 0); }
 	bool clone(const char *repositoryUrl);
-	bool clone(const char *repositoryUrl, const char *branch);
+	bool checkout(const char *repositoryDir, const char *branch, const char *workTreeDir);
+	inline bool checkout(const char *repositoryDir, const char *branch) { return checkout(repositoryDir, branch, repositoryDir); }
 	bool checkRepositoryVersion(const char *repositoryDir, std::string &version);
 
 	inline bool found() const { return found_; }

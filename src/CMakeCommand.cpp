@@ -90,7 +90,8 @@ bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char 
 
 	if (arguments)
 	{
-		configureCommand.append(" ");
+		if (arguments[0] != ' ')
+			configureCommand.append(" ");
 		configureCommand += arguments;
 	}
 

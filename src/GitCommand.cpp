@@ -55,15 +55,22 @@ GitCommand::GitCommand()
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
 
-bool GitCommand::clone(const char *repositoryUrl, const char *branch)
+bool GitCommand::clone(const char *repositoryUrl, const char *branch, unsigned int depth, bool noCheckout)
 {
 	assert(found_);
 	assert(repositoryUrl);
 	assert(branch);
 	output_.clear();
 
-	snprintf(buffer, MaxLength, "%s clone --single-branch --branch %s %s", executable_.data(), branch, repositoryUrl);
-	const bool executed = Process::executeCommand(buffer, output_);
+	std::string cloneCommand = executable() + " clone " + repositoryUrl;
+	cloneCommand += " --single-branch --branch ";
+	cloneCommand += branch;
+	if (depth > 0)
+		cloneCommand += " --depth " + std::to_string(depth);
+	if (noCheckout)
+		cloneCommand += " --no-checkout";
+
+	const bool executed = Process::executeCommand(cloneCommand.data(), output_);
 	return executed;
 }
 
@@ -74,6 +81,23 @@ bool GitCommand::clone(const char *repositoryUrl)
 	output_.clear();
 
 	snprintf(buffer, MaxLength, "%s clone %s", executable_.data(), repositoryUrl);
+	const bool executed = Process::executeCommand(buffer, output_);
+	return executed;
+}
+
+bool GitCommand::checkout(const char *repositoryDir, const char *branch, const char *workTreeDir)
+{
+	assert(found_);
+	assert(repositoryDir);
+	assert(branch);
+	output_.clear();
+
+	const std::string repositoryGitDir = fs::joinPath(repositoryDir, ".git");
+
+	if (workTreeDir)
+		snprintf(buffer, MaxLength, "%s --git-dir=%s --work-tree=%s checkout %s", executable_.data(), repositoryGitDir.data(), workTreeDir, branch);
+	else
+		snprintf(buffer, MaxLength, "%s --git-dir=%s checkout %s", executable_.data(), repositoryGitDir.data(), branch);
 	const bool executed = Process::executeCommand(buffer, output_);
 	return executed;
 }

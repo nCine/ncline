@@ -22,9 +22,14 @@ class Helpers
 	static void buildDir(std::string &binaryDir, const Settings &settings);
 
 	static const char *nCineLibrariesRepositoryUrl() { return "https://github.com/nCine/nCine-libraries.git"; }
-	static const char *nCineRepositoryUrl() { return "https://github.com/nCine/nCine.git"; }
-	static const char *nCineDataRepositoryUrl() { return "https://github.com/nCine/nCine-data.git"; }
+	static const char *nCineLibrariesArtifactsRepositoryUrl() { return "https://github.com/nCine/nCine-libraries-artifacts.git"; }
 	static const char *nCineLibrariesSourceDir() { return "nCine-libraries"; }
+	static const char *nCineLibrariesArtifactsSourceDir() { return "nCine-libraries-artifacts"; }
+
+	static const char *nCineRepositoryUrl() { return "https://github.com/nCine/nCine.git"; }
+	static const char *nCineArtifactsRepositoryUrl() { return "https://github.com/nCine/nCine-artifacts.git"; }
+	static const char *nCineDataRepositoryUrl() { return "https://github.com/nCine/nCine-data.git"; }
 	static const char *nCineSourceDir() { return "nCine"; }
+	static const char *nCineArtifactsSourceDir() { return "nCine-artifacts"; }
 	static const char *nCineDataSourceDir() { return "nCine-data"; }
 };

@@ -25,6 +25,14 @@ namespace CMake {
 	const char *vsVersion = "vs_version";
 }
 
+namespace nCine {
+	const char *table = "ncine";
+	const char *branch = "branch";
+	const char *compiler = "compiler";
+	const char *compilerGCC = "gcc";
+	const char *compilerClang = "clang";
+}
+
 }
 
 Configuration &config()
@@ -145,6 +153,56 @@ void Configuration::setVsVersion(unsigned int version)
 		cmakeSection_->insert(Names::CMake::vsVersion, version);
 }
 
+bool Configuration::branchName(std::string &value) const
+{
+	bool valueFound = false;
+
+	auto name = ncineSection_->get_as<std::string>(Names::nCine::branch);
+	if (name)
+	{
+		value = *name;
+		valueFound = true;
+	}
+
+	return valueFound;
+}
+
+void Configuration::setBranchName(const std::string &value)
+{
+	ncineSection_->insert(Names::nCine::branch, value);
+}
+
+Configuration::Compiler Configuration::compiler() const
+{
+#ifndef __APPLE__
+	auto name = ncineSection_->get_as<std::string>(Names::nCine::compiler);
+	if (name)
+	{
+		if (*name == Names::nCine::compilerGCC)
+			return Compiler::GCC;
+		else if (*name == Names::nCine::compilerClang)
+			return Compiler::CLANG;
+	}
+#endif
+	return Compiler::UNSPECIFIED;
+}
+
+void Configuration::setCompiler(Compiler compiler)
+{
+	switch (compiler)
+	{
+		case Compiler::GCC:
+			ncineSection_->insert(Names::nCine::compiler, Names::nCine::compilerGCC);
+			break;
+		case Compiler::CLANG:
+			ncineSection_->insert(Names::nCine::compiler, Names::nCine::compilerClang);
+			break;
+		case Compiler::UNSPECIFIED:
+			ncineSection_->insert(Names::nCine::compiler, "");
+			break;
+	}
+}
+
 void Configuration::print() const
 {
 	std::cout << *root_;
@@ -176,5 +234,12 @@ void Configuration::retrieveSections()
 	{
 		cmakeSection_ = cpptoml::make_table();
 		root_->insert(Names::CMake::table, cmakeSection_);
+	}
+
+	ncineSection_ = root_->get_table(Names::nCine::table);
+	if (ncineSection_ == nullptr)
+	{
+		ncineSection_ = cpptoml::make_table();
+		root_->insert(Names::nCine::table, ncineSection_);
 	}
 }

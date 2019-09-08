@@ -47,6 +47,7 @@ class Settings
 
 	inline Mode mode() const { return mode_; }
 	inline DownloadMode downloadMode() const { return downloadMode_; }
+	inline bool downloadArtifact() const { return downloadArtifact_; }
 	inline ConfMode confMode() const { return confMode_; }
 	inline BuildType buildType() const { return buildType_; }
 	inline BuildMode buildMode() const { return buildMode_; }
@@ -54,6 +55,7 @@ class Settings
   private:
 	Mode mode_ = Mode::HELP;
 	DownloadMode downloadMode_ = DownloadMode::LIBS;
+	bool downloadArtifact_ = false;
 	ConfMode confMode_ = ConfMode::LIBS;
 	BuildType buildType_ = BuildType::RELEASE;
 	BuildMode buildMode_ = BuildMode::LIBS;
