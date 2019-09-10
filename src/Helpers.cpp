@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include "Helpers.h"
 #include "CMakeCommand.h"
@@ -117,8 +118,56 @@ void Helpers::error(const char *msg1, const char *msg2)
 
 void Helpers::buildDir(std::string &binaryDir, const Settings &settings)
 {
-	if (CMakeCommand::generatorIsMultiConfig())
-		binaryDir += "-build";
+	if (config().withEmscripten())
+		binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-web-debug" : "-web-release";
 	else
-		binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
+	{
+		if (CMakeCommand::generatorIsMultiConfig())
+			binaryDir += "-build";
+		else
+			binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
+	}
+}
+
+std::string Helpers::gameRepositoryUrl(const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	std::string repositoryUrl = "https://github.com/nCine/";
+	repositoryUrl += gameName + ".git";
+	return repositoryUrl;
+}
+
+std::string Helpers::gameArtifactsRepositoryUrl(const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	std::string repositoryUrl = "https://github.com/nCine/";
+	repositoryUrl += gameName + "-artifacts.git";
+	return repositoryUrl;
+}
+
+std::string Helpers::gameDataRepositoryUrl(const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	std::string repositoryUrl = "https://github.com/nCine/";
+	repositoryUrl += gameName + "-data.git";
+	return repositoryUrl;
+}
+
+std::string Helpers::gameArtifactsSourceDir(const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	std::string sourceDir = gameName + "-artifacts";
+	return sourceDir;
+}
+
+std::string Helpers::gameDataSourceDir(const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	std::string sourceDir = gameName + "-data";
+	return sourceDir;
 }

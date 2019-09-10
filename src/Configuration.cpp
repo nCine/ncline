@@ -18,8 +18,10 @@ namespace Git {
 
 namespace CMake {
 	const char *table = "cmake";
-	const char *executable = "executable";
+	const char *cmakeExecutable = "cmake_executable";
 	const char *ninjaExecutable = "ninja_executable";
+	const char *emcmakeExecutable = "emcmake_executable";
+	const char *withEmscripten = "emscripten";
 	const char *withNinja = "ninja";
 	const char *withMinGW = "mingw";
 	const char *vsVersion = "vs_version";
@@ -27,10 +29,13 @@ namespace CMake {
 
 namespace nCine {
 	const char *table = "ncine";
-	const char *branch = "branch";
 	const char *compiler = "compiler";
 	const char *compilerGCC = "gcc";
 	const char *compilerClang = "clang";
+	const char *cmakeArguments = "cmake_arguments";
+	const char *branch = "branch";
+	const char *ncineDir = "ncine_dir";
+	const char *gameName = "game_name";
 }
 
 }
@@ -80,44 +85,52 @@ void Configuration::setWithColors(bool value)
 
 bool Configuration::gitExecutable(std::string &value) const
 {
-	bool valueFound = false;
+	return retrieveString(gitSection_, Names::Git::executable, value);
+}
 
-	auto gitExe = gitSection_->get_as<std::string>(Names::Git::executable);
-	if (gitExe)
-	{
-		value = *gitExe;
-		valueFound = true;
-	}
-
-	return valueFound;
+void Configuration::setGitExecutable(const std::string &value)
+{
+	gitSection_->insert(Names::Git::executable, value);
 }
 
 bool Configuration::cmakeExecutable(std::string &value) const
 {
-	bool valueFound = false;
+	return retrieveString(cmakeSection_, Names::CMake::cmakeExecutable, value);
+}
 
-	auto cmakeExe = cmakeSection_->get_as<std::string>(Names::CMake::executable);
-	if (cmakeExe)
-	{
-		value = *cmakeExe;
-		valueFound = true;
-	}
-
-	return valueFound;
+void Configuration::setCMakeExecutable(const std::string &value)
+{
+	cmakeSection_->insert(Names::CMake::cmakeExecutable, value);
 }
 
 bool Configuration::ninjaExecutable(std::string &value) const
 {
-	bool valueFound = false;
+	return retrieveString(cmakeSection_, Names::CMake::ninjaExecutable, value);
+}
 
-	auto ninjaExe = cmakeSection_->get_as<std::string>(Names::CMake::ninjaExecutable);
-	if (ninjaExe)
-	{
-		value = *ninjaExe;
-		valueFound = true;
-	}
+void Configuration::setNinjaExecutable(const std::string &value)
+{
+	cmakeSection_->insert(Names::CMake::ninjaExecutable, value);
+}
 
-	return valueFound;
+bool Configuration::emcmakeExecutable(std::string &value) const
+{
+	return retrieveString(cmakeSection_, Names::CMake::emcmakeExecutable, value);
+}
+
+void Configuration::setEmcmakeExecutable(const std::string &value)
+{
+	cmakeSection_->insert(Names::CMake::emcmakeExecutable, value);
+}
+
+bool Configuration::withEmscripten() const
+{
+	return cmakeSection_->get_as<bool>(Names::CMake::withEmscripten).value_or(false);
+}
+
+void Configuration::setWithEmscripten(bool value)
+{
+	cmakeSection_->insert(Names::CMake::withEmscripten, value);
 }
 
 bool Configuration::withNinja() const
@@ -153,25 +166,6 @@ void Configuration::setVsVersion(unsigned int version)
 		cmakeSection_->insert(Names::CMake::vsVersion, version);
 }
 
-bool Configuration::branchName(std::string &value) const
-{
-	bool valueFound = false;
-
-	auto name = ncineSection_->get_as<std::string>(Names::nCine::branch);
-	if (name)
-	{
-		value = *name;
-		valueFound = true;
-	}
-
-	return valueFound;
-}
-
-void Configuration::setBranchName(const std::string &value)
-{
-	ncineSection_->insert(Names::nCine::branch, value);
-}
-
 Configuration::Compiler Configuration::compiler() const
 {
 #ifndef __APPLE__
@@ -203,6 +197,56 @@ void Configuration::setCompiler(Compiler compiler)
 	}
 }
 
+bool Configuration::engineCMakeArguments(std::string &value) const
+{
+	return retrieveString(ncineSection_, Names::nCine::cmakeArguments, value);
+}
+
+void Configuration::setEngineCMakeArguments(const std::string &value)
+{
+	ncineSection_->insert(Names::nCine::cmakeArguments, value);
+}
+
+bool Configuration::branchName(std::string &value) const
+{
+	return retrieveString(ncineSection_, Names::nCine::branch, value);
+}
+
+void Configuration::setBranchName(const std::string &value)
+{
+	ncineSection_->insert(Names::nCine::branch, value);
+}
+
+bool Configuration::hasEngineDir() const
+{
+	return hasString(ncineSection_, Names::nCine::ncineDir);
+}
+
+bool Configuration::engineDir(std::string &value) const
+{
+	return retrieveString(ncineSection_, Names::nCine::ncineDir, value);
+}
+
+void Configuration::setEngineDir(const std::string &value)
+{
+	ncineSection_->insert(Names::nCine::ncineDir, value);
+}
+
+bool Configuration::hasGameName() const
+{
+	return hasString(ncineSection_, Names::nCine::gameName);
+}
+
+bool Configuration::gameName(std::string &value) const
+{
+	return retrieveString(ncineSection_, Names::nCine::gameName, value);
+}
+
+void Configuration::setGameName(const std::string &value)
+{
+	ncineSection_->insert(Names::nCine::gameName, value);
+}
+
 void Configuration::print() const
 {
 	std::cout << *root_;
@@ -219,6 +263,26 @@ void Configuration::save()
 ///////////////////////////////////////////////////////////
 // PRIVATE FUNCTIONS
 ///////////////////////////////////////////////////////////
+
+bool Configuration::hasString(const std::shared_ptr<cpptoml::table> &section, const char *name) const
+{
+	auto string = section->get_as<std::string>(name);
+	return string.operator bool();
+}
+
+bool Configuration::retrieveString(const std::shared_ptr<cpptoml::table> &section, const char *name, std::string &dest) const
+{
+	bool valueFound = false;
+
+	auto string = section->get_as<std::string>(name);
+	if (string)
+	{
+		dest = *string;
+		valueFound = true;
+	}
+
+	return valueFound;
+}
 
 void Configuration::retrieveSections()
 {

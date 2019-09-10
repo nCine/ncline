@@ -54,6 +54,9 @@ CMakeCommand::CMakeCommand()
 		if (config().withNinja())
 			findNinja();
 	}
+
+	if (config().emcmakeExecutable(emcmakeExecutable_) == false)
+		emcmakeExecutable_ = "emcmake";
 }
 
 ///////////////////////////////////////////////////////////
@@ -62,6 +65,9 @@ CMakeCommand::CMakeCommand()
 
 bool CMakeCommand::generatorIsMultiConfig()
 {
+	if (config().withEmscripten())
+		return false;
+
 #ifdef _WIN32
 	if (config().withMinGW())
 		return false;
@@ -79,14 +85,23 @@ bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char 
 	assert(binDir);
 	output_.clear();
 
-	snprintf(buffer, MaxLength, "%s -S \"%s\" -B \"%s\"", executable_.data(), srcDir, binDir);
-	std::string configureCommand = buffer;
-
-	if (platform())
-		snprintf(buffer, MaxLength, " -G \"%s\" -A %s", generator(), platform());
+	std::string configureCommand;
+	if (config().withEmscripten())
+		configureCommand = emcmakeExecutable_ + " " + executable_;
 	else
-		snprintf(buffer, MaxLength, " -G \"%s\"", generator());
+		configureCommand = executable_;
+
+	snprintf(buffer, MaxLength, " -S \"%s\" -B \"%s\"", srcDir, binDir);
 	configureCommand += buffer;
+
+	if (config().withEmscripten() == false)
+	{
+		if (platform())
+			snprintf(buffer, MaxLength, " -G \"%s\" -A %s", generator(), platform());
+		else
+			snprintf(buffer, MaxLength, " -G \"%s\"", generator());
+		configureCommand += buffer;
+	}
 
 	if (arguments)
 	{

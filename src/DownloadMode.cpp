@@ -7,6 +7,14 @@
 
 namespace {
 
+bool gameNameIsCustom(const std::string &gameName)
+{
+	return (gameName != "ncTemplate" &&
+	        gameName != "ncPong" &&
+	        gameName != "ncInvaders" &&
+	        gameName != "ncParticleEditor");
+}
+
 void appendCompilerString(std::string &branchName)
 {
 	switch (config().compiler())
@@ -23,8 +31,10 @@ void appendCompilerString(std::string &branchName)
 
 const char *librariesArtifactsBranch()
 {
-	// TODO: Add Emscripten and Android branches
+	// TODO: Add Android branches
 
+	if (config().withEmscripten())
+		return "libraries-emscripten-emcc";
 #if defined(__APPLE__)
 	return "libraries-darwin-appleclang";
 #elif defined(_WIN32)
@@ -45,35 +55,45 @@ const char *librariesArtifactsBranch()
 	return nullptr;
 }
 
-const char *engineArtifactsBranch()
+const char *artifactsBranch(const char *project)
 {
-	// TODO: Add Emscripten branch
+	// TODO: Add Android branches for non engine projects
 
+	assert(project);
 	static std::string branchName;
-	branchName = "master";
-	config().branchName(branchName);
 
-	branchName = "nCine-" + branchName;
-#if defined(__APPLE__)
-	branchName += "-darwin-appleclang";
-#elif defined(_WIN32)
-	if (config().withMinGW())
-	{
-		branchName += "-mingw64";
-		appendCompilerString(branchName);
-	}
+	std::string configBranchName = "master";
+	config().branchName(configBranchName);
+
+	branchName = project;
+	branchName += "-" + configBranchName;
+
+	if (config().withEmscripten())
+		branchName += "-emscripten-emcc";
 	else
 	{
-		branchName += "-windows";
-		if (config().vsVersion() == 2019)
-			branchName += "-vs2019";
-		else if (config().vsVersion() == 2017)
-			branchName += "-vs2017";
-	}
+#if defined(__APPLE__)
+		branchName += "-darwin-appleclang";
+#elif defined(_WIN32)
+		if (config().withMinGW())
+		{
+			branchName += "-mingw64";
+			appendCompilerString(branchName);
+		}
+		else
+		{
+			branchName += "-windows";
+			if (config().vsVersion() == 2019)
+				branchName += "-vs2019";
+			else if (config().vsVersion() == 2017)
+				branchName += "-vs2017";
+		}
 #else
-	branchName += "-linux";
-	appendCompilerString(branchName);
+		branchName += "-linux";
+		appendCompilerString(branchName);
 #endif
+	}
+
 	return branchName.data();
 }
 
@@ -97,13 +117,13 @@ void downloadLibraries(GitCommand &git)
 
 void downloadEngineArtifact(GitCommand &git)
 {
-	git.clone(Helpers::nCineArtifactsRepositoryUrl(), engineArtifactsBranch(), 1, true);
-	git.checkout(Helpers::nCineArtifactsSourceDir(), engineArtifactsBranch(), nullptr);
+	git.clone(Helpers::nCineArtifactsRepositoryUrl(), artifactsBranch("nCine"), 1, true);
+	git.checkout(Helpers::nCineArtifactsSourceDir(), artifactsBranch("nCine"), nullptr);
 }
 
 void downloadEngine(GitCommand &git)
 {
-	git.clone(Helpers::nCineDataRepositoryUrl());
+	git.clone(Helpers::nCineDataRepositoryUrl(), "master", 1);
 	git.clone(Helpers::nCineRepositoryUrl());
 
 	std::string branchName;
@@ -118,6 +138,33 @@ void downloadEngine(GitCommand &git)
 		Helpers::info("Repository at version: ", version.data());
 }
 
+void downloadGameArtifact(GitCommand &git, const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	git.clone(Helpers::gameArtifactsRepositoryUrl(gameName).data(), artifactsBranch(gameName.data()), 1, true);
+	git.checkout(Helpers::gameArtifactsSourceDir(gameName).data(), artifactsBranch(gameName.data()), nullptr);
+}
+
+void downloadGame(GitCommand &git, const std::string &gameName)
+{
+	assert(gameName.empty() == false);
+
+	git.clone(Helpers::gameDataRepositoryUrl(gameName).data(), "master", 1);
+	git.clone(Helpers::gameRepositoryUrl(gameName).data());
+
+	std::string branchName;
+	if (config().branchName(branchName))
+	{
+		Helpers::info("Check out game branch: ", branchName.data());
+		git.checkout(gameName.data(), branchName.data());
+	}
+
+	std::string version;
+	if (git.checkRepositoryVersion(gameName.data(), version))
+		Helpers::info("Repository at version: ", version.data());
+}
+
 }
 
 ///////////////////////////////////////////////////////////
@@ -128,21 +175,36 @@ void DownloadMode::perform(GitCommand &git, const Settings &settings)
 {
 	assert(settings.mode() == Settings::Mode::DOWNLOAD);
 
-	switch (settings.downloadMode())
+	switch (settings.target())
 	{
-		case Settings::DownloadMode::LIBS:
+		case Settings::Target::LIBS:
 			if (settings.downloadArtifact())
 				downloadLibrariesArtifact(git);
 			else
 				downloadLibraries(git);
 			break;
-		case Settings::DownloadMode::ENGINE:
+		case Settings::Target::ENGINE:
 			if (settings.downloadArtifact())
 				downloadEngineArtifact(git);
 			else
 				downloadEngine(git);
 			break;
-		default:
+		case Settings::Target::GAME:
+		{
+			std::string gameName;
+			config().gameName(gameName);
+			if (gameNameIsCustom(gameName))
+			{
+				Helpers::error("No official nCine game project with the specified name");
+				Helpers::info("Don't use the 'download' command with a custom project");
+				return;
+			}
+
+			if (settings.downloadArtifact())
+				downloadGameArtifact(git, gameName);
+			else
+				downloadGame(git, gameName);
 			break;
+		}
 	}
 }

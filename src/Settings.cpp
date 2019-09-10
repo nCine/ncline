@@ -20,6 +20,10 @@ bool Settings::parseArguments(int argc, char **argv)
 	// clang-format off
 	auto setMode = (command("set").set(mode_, Mode::SET),
 	                (
+	                    option("-emscripten").call([] { config().setWithEmscripten(true); }) |
+	                    option("-no-emscripten").call([] { config().setWithEmscripten(false); })
+	                ).doc("(do not) use Emscripten to compile for the web"),
+	                (
 	                    option("-ninja").call([] { config().setWithNinja(true); }) |
 	                    option("-no-ninja").call([] { config().setWithNinja(false); })
 	                ).doc("(do not) prefer Ninja as a CMake generator"),
@@ -43,24 +47,31 @@ bool Settings::parseArguments(int argc, char **argv)
 	                    option("-colors").call([] { config().setWithColors(true); }) |
 	                    option("-no-colors").call([] { config().setWithColors(false); })
 	                ).doc("(do not) use shell colors in the output"),
-	                option("-branch") & value("name").call([&](const std::string &branchName) { config().setBranchName(branchName); }).doc("branch name for engine and projects")
+	                option("-git-exe") & value("executable").call([&](const std::string &gitExe) { config().setGitExecutable(gitExe); }).doc("set the Git command executable"),
+	                option("-cmake-exe") & value("executable").call([&](const std::string &cmakeExe) { config().setCMakeExecutable(cmakeExe); }).doc("set the CMake command executable"),
+	                option("-ninja-exe") & value("executable").call([&](const std::string &ninjaExe) { config().setNinjaExecutable(ninjaExe); }).doc("set the Ninja command executable"),
+	                option("-emcmake-exe") & value("executable").call([&](const std::string &emcmakeExe) { config().setEmcmakeExecutable(emcmakeExe); }).doc("set the Emscripten emcmake command executable"),
+	                option("-cmake-args") & value("args").call([&](const std::string &cmakeArgs) { config().setEngineCMakeArguments(cmakeArgs); }).doc("additional CMake arguments to configure the engine"),
+	                option("-branch") & value("name").call([&](const std::string &branchName) { config().setBranchName(branchName); }).doc("branch name for engine and projects"),
+	                option("-ncine-dir") & value("path").call([&](const std::string &directory) { config().setEngineDir(directory); }).doc("path to the CMake script directory inside a compiled or installed engine"),
+	                option("-game") & value("name").call([&](const std::string &gameName) { config().setGameName(gameName); }).doc("name of the game project")
 	               );
 
 	auto downloadMode = (command("download").set(mode_, Mode::DOWNLOAD).doc("download mode"),
-	                     command("libs").set(downloadMode_, DownloadMode::LIBS) |
-	                     command("engine").set(downloadMode_, DownloadMode::ENGINE) |
-	                     command("game").set(downloadMode_, DownloadMode::GAME),
+	                     command("libs").set(target_, Target::LIBS) |
+	                     command("engine").set(target_, Target::ENGINE) |
+	                     command("game").set(target_, Target::GAME),
 	                     option("-artifact").set(downloadArtifact_, true).doc("download the C.I. compiled artifact instead of source code"));
 
 	auto confMode = (command("conf").set(mode_, Mode::CONF).doc("configuration mode"),
-	                 command("libs").set(confMode_, ConfMode::LIBS) |
-	                 command("engine").set(confMode_, ConfMode::ENGINE) |
-	                 command("game").set(confMode_, ConfMode::GAME));
+	                 command("libs").set(target_, Target::LIBS) |
+	                 command("engine").set(target_, Target::ENGINE) |
+	                 command("game").set(target_, Target::GAME));
 
 	auto buildMode = (command("build").set(mode_, Mode::BUILD).doc("build mode"),
-	                  command("libs").set(buildMode_, BuildMode::LIBS) |
-	                  command("engine").set(buildMode_, BuildMode::ENGINE) |
-	                  command("game").set(buildMode_, BuildMode::GAME));
+	                  command("libs").set(target_, Target::LIBS) |
+	                  command("engine").set(target_, Target::ENGINE) |
+	                  command("game").set(target_, Target::GAME));
 
 	auto &buildTypeMode = CMakeCommand::generatorIsMultiConfig() ? buildMode : confMode;
 	buildTypeMode.push_back(command("debug").set(buildType_, BuildType::DEBUG) | command("release").set(buildType_, BuildType::RELEASE).doc("choose debug or release build type"));

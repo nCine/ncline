@@ -2,11 +2,20 @@
 
 #ifdef _WIN32
 	#define _AMD64_
+	#include <windef.h>
+	#include <WinBase.h>
 	#include <fileapi.h>
 #else
 	#include <unistd.h>
 	#include <sys/stat.h>
 #endif
+
+namespace {
+
+const int MaxLength = 512;
+char buffer[MaxLength];
+
+}
 
 ///////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS
@@ -23,6 +32,17 @@ std::string FileSystem::joinPath(const std::string &first, const std::string &se
 		return first + "/" + second;
 	else
 		return first + second.substr(1);
+}
+
+std::string FileSystem::currentDir()
+{
+#ifdef _WIN32
+	GetCurrentDirectory(MaxLength, buffer);
+#else
+	getcwd(buffer, MaxLength);
+#endif
+
+	return std::string(buffer);
 }
 
 bool FileSystem::isDirectory(const char *file)

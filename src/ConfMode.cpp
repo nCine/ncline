@@ -18,7 +18,7 @@ const char *settingsToBuildTypeString(Settings::BuildType buildType)
 	return nullptr;
 }
 
-bool preferredCompiler(std::string &cmakeArguments)
+bool preferredCompilerArgs(std::string &cmakeArguments)
 {
 	bool argumentsAdded = true;
 
@@ -38,7 +38,7 @@ bool preferredCompiler(std::string &cmakeArguments)
 	return argumentsAdded;
 }
 
-bool buildType(std::string &cmakeArguments, const Settings &settings)
+bool buildTypeArg(std::string &cmakeArguments, const Settings &settings)
 {
 	bool argumentsAdded = false;
 
@@ -52,6 +52,26 @@ bool buildType(std::string &cmakeArguments, const Settings &settings)
 	return argumentsAdded;
 }
 
+bool additionalArgs(std::string &cmakeArguments)
+{
+	std::string arguments;
+	const bool argumentsAdded = config().engineCMakeArguments(arguments);
+	if (argumentsAdded)
+		cmakeArguments += " " + arguments;
+
+	return argumentsAdded;
+}
+
+bool ncineDirArg(std::string &cmakeArguments)
+{
+	std::string arguments;
+	const bool argumentsAdded = config().engineDir(arguments);
+	if (argumentsAdded)
+		cmakeArguments += " -D nCine_DIR=" + arguments;
+
+	return argumentsAdded;
+}
+
 void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 {
 	Helpers::info("Configure the libraries");
@@ -60,8 +80,9 @@ void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 	Helpers::buildDir(buildDir, settings);
 
 	std::string arguments;
-	preferredCompiler(arguments);
-	buildType(arguments, settings);
+	if (config().withEmscripten() == false)
+		preferredCompilerArgs(arguments);
+	buildTypeArg(arguments, settings);
 
 	cmake.configure(Helpers::nCineLibrariesSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
 }
@@ -74,10 +95,28 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 	Helpers::buildDir(buildDir, settings);
 
 	std::string arguments;
-	preferredCompiler(arguments);
-	buildType(arguments, settings);
+	if (config().withEmscripten() == false)
+		preferredCompilerArgs(arguments);
+	buildTypeArg(arguments, settings);
+	additionalArgs(arguments);
 
 	cmake.configure(Helpers::nCineSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
+}
+
+void configureGame(CMakeCommand &cmake, const Settings &settings, const std::string &gameName)
+{
+	Helpers::info("Configure the game: ", gameName.data());
+
+	std::string buildDir = gameName;
+	Helpers::buildDir(buildDir, settings);
+
+	std::string arguments;
+	if (config().withEmscripten() == false)
+		preferredCompilerArgs(arguments);
+	buildTypeArg(arguments, settings);
+	ncineDirArg(arguments);
+
+	cmake.configure(gameName.data(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
 }
 
 }
@@ -90,10 +129,21 @@ void ConfMode::perform(CMakeCommand &cmake, const Settings &settings)
 {
 	assert(settings.mode() == Settings::Mode::CONF);
 
-	switch (settings.confMode())
+	switch (settings.target())
 	{
-		case Settings::ConfMode::LIBS: configureLibraries(cmake, settings); break;
-		case Settings::ConfMode::ENGINE: configureEngine(cmake, settings); break;
-		default: break;
+		case Settings::Target::LIBS:
+			configureLibraries(cmake, settings);
+			break;
+		case Settings::Target::ENGINE:
+			configureEngine(cmake, settings);
+			break;
+		case Settings::Target::GAME:
+		{
+			std::string gameName;
+			config().gameName(gameName);
+
+			configureGame(cmake, settings, gameName);
+			break;
+		}
 	}
 }

@@ -35,6 +35,7 @@ class CMakeCommand
 	bool ninjaFound_;
 	std::string ninjaExecutable_;
 	unsigned int ninjaVersion_[3];
+	std::string emcmakeExecutable_;
 
 	std::string output_;
 

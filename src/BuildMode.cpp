@@ -2,8 +2,12 @@
 #include <iostream>
 #include "BuildMode.h"
 #include "CMakeCommand.h"
+#include "FileSystem.h"
 #include "Settings.h"
+#include "Configuration.h"
 #include "Helpers.h"
+
+using fs = FileSystem;
 
 namespace {
 
@@ -37,6 +41,32 @@ void buildEngine(CMakeCommand &cmake, const Settings &settings)
 	std::string buildDir = Helpers::nCineSourceDir();
 	Helpers::buildDir(buildDir, settings);
 
+	bool hasBuilt = false;
+	if (CMakeCommand::generatorIsMultiConfig())
+		hasBuilt = cmake.buildConfig(buildDir.data(), settingsToBuildConfigString(settings.buildType()));
+	else
+		hasBuilt = cmake.build(buildDir.data());
+
+	if (hasBuilt && config().hasEngineDir() == false)
+	{
+		std::string absolutePath = fs::currentDir();
+		absolutePath = fs::joinPath(absolutePath, buildDir);
+		if (fs::isDirectory(absolutePath.data()))
+		{
+			config().setEngineDir(absolutePath.data());
+			config().save();
+			Helpers::info("Set 'nCine_DIR' CMake variable to: ", absolutePath.data());
+		}
+	}
+}
+
+void buildGame(CMakeCommand &cmake, const Settings &settings, const std::string &gameName)
+{
+	Helpers::info("Build the game: ", gameName.data());
+
+	std::string buildDir = gameName;
+	Helpers::buildDir(buildDir, settings);
+
 	if (CMakeCommand::generatorIsMultiConfig())
 		cmake.buildConfig(buildDir.data(), settingsToBuildConfigString(settings.buildType()));
 	else
@@ -53,10 +83,21 @@ void BuildMode::perform(CMakeCommand &cmake, const Settings &settings)
 {
 	assert(settings.mode() == Settings::Mode::BUILD);
 
-	switch (settings.buildMode())
+	switch (settings.target())
 	{
-		case Settings::BuildMode::LIBS: buildLibraries(cmake, settings); break;
-		case Settings::BuildMode::ENGINE: buildEngine(cmake, settings); break;
-		default: break;
+		case Settings::Target::LIBS:
+			buildLibraries(cmake, settings);
+			break;
+		case Settings::Target::ENGINE:
+			buildEngine(cmake, settings);
+			break;
+		case Settings::Target::GAME:
+		{
+			std::string gameName;
+			config().gameName(gameName);
+
+			buildGame(cmake, settings, gameName);
+			break;
+		}
 	}
 }

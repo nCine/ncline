@@ -52,7 +52,15 @@ int main(int argc, char **argv)
 				Helpers::info("Ninja executable found: ", cmake.ninjaExecutable().data());
 		}
 
-		if (git.found() && cmake.found())
+		bool gameNameIsMissing = false;
+		if (settings.target() == Settings::Target::GAME && config().hasGameName() == false)
+		{
+			Helpers::error("No game name in the configuration");
+			Helpers::info("Specify a game name with the 'set' command");
+			gameNameIsMissing = true;
+		}
+
+		if (git.found() && cmake.found() && gameNameIsMissing == false)
 		{
 			switch (settings.mode())
 			{

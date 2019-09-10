@@ -32,4 +32,10 @@ class Helpers
 	static const char *nCineSourceDir() { return "nCine"; }
 	static const char *nCineArtifactsSourceDir() { return "nCine-artifacts"; }
 	static const char *nCineDataSourceDir() { return "nCine-data"; }
+
+	static std::string gameRepositoryUrl(const std::string &gameName);
+	static std::string gameArtifactsRepositoryUrl(const std::string &gameName);
+	static std::string gameDataRepositoryUrl(const std::string &gameName);
+	static std::string gameArtifactsSourceDir(const std::string &gameName);
+	static std::string gameDataSourceDir(const std::string &gameName);
 };

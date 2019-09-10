@@ -16,14 +16,7 @@ class Settings
 		VERSION
 	};
 
-	enum class DownloadMode
-	{
-		LIBS,
-		ENGINE,
-		GAME
-	};
-
-	enum class ConfMode
+	enum class Target
 	{
 		LIBS,
 		ENGINE,
@@ -36,27 +29,16 @@ class Settings
 		RELEASE
 	};
 
-	enum class BuildMode
-	{
-		LIBS,
-		ENGINE,
-		GAME
-	};
-
 	bool parseArguments(int argc, char **argv);
 
 	inline Mode mode() const { return mode_; }
-	inline DownloadMode downloadMode() const { return downloadMode_; }
-	inline bool downloadArtifact() const { return downloadArtifact_; }
-	inline ConfMode confMode() const { return confMode_; }
+	inline Target target() const { return target_; }
 	inline BuildType buildType() const { return buildType_; }
-	inline BuildMode buildMode() const { return buildMode_; }
+	inline bool downloadArtifact() const { return downloadArtifact_; }
 
   private:
 	Mode mode_ = Mode::HELP;
-	DownloadMode downloadMode_ = DownloadMode::LIBS;
-	bool downloadArtifact_ = false;
-	ConfMode confMode_ = ConfMode::LIBS;
+	Target target_ = Target::LIBS;
 	BuildType buildType_ = BuildType::RELEASE;
-	BuildMode buildMode_ = BuildMode::LIBS;
+	bool downloadArtifact_ = false;
 };
