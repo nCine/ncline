@@ -8,7 +8,9 @@ class Settings;
 class Helpers
 {
   public:
-	static char *getEnv(const char *name);
+	static const char *getEnvironment(const char *name);
+	static bool setEnvironment(const char *name, const char *value);
+	static bool addDirToPath(const char *directory);
 
 	static bool checkMinVersion(unsigned int major, unsigned int minor, unsigned int patch, unsigned int minMajor, unsigned int minMinor, unsigned int minPatch);
 	static bool checkMinVersion(const unsigned int version[], unsigned int minMajor, unsigned int minMinor, unsigned int minPatch);

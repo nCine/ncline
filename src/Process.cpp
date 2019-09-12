@@ -54,6 +54,12 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 }
 
 ///////////////////////////////////////////////////////////
+// STATIC DEFINITIONS
+///////////////////////////////////////////////////////////
+
+bool Process::dryRun = false;
+
+///////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
 
@@ -99,6 +105,9 @@ bool Process::executeCommand(const char *command, std::string *output, Echo echo
 
 	if (echoMode == Echo::ENABLED)
 		Helpers::echo(command);
+
+	if (dryRun)
+		return true;
 
 	FILE *fp = popenWrapper(command, "r");
 

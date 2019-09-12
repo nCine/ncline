@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 /// A class to execute a process and retrieve its output
 class Process
 {
@@ -13,6 +15,8 @@ class Process
 #ifdef _WIN32
 	static void setupJobObject();
 #endif
+
+	static bool dryRun;
 
 	static bool executeCommand(const char *command);
 	static bool executeCommand(const char *command, Echo echoMode);

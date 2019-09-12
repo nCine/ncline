@@ -11,16 +11,16 @@ const char *configFile = "ncline.ini";
 
 const char *withColors = "colors";
 
-namespace Git {
-	const char *table = "git";
-	const char *executable = "executable";
+namespace Executables {
+	const char *table = "executables";
+	const char *git = "git";
+	const char *cmake = "cmake";
+	const char *ninja = "ninja";
+	const char *emcmake = "emcmake";
 }
 
 namespace CMake {
 	const char *table = "cmake";
-	const char *cmakeExecutable = "cmake_executable";
-	const char *ninjaExecutable = "ninja_executable";
-	const char *emcmakeExecutable = "emcmake_executable";
 	const char *withEmscripten = "emscripten";
 	const char *withNinja = "ninja";
 	const char *withMinGW = "mingw";
@@ -85,42 +85,42 @@ void Configuration::setWithColors(bool value)
 
 bool Configuration::gitExecutable(std::string &value) const
 {
-	return retrieveString(gitSection_, Names::Git::executable, value);
+	return retrieveString(executablesSection_, Names::Executables::git, value);
 }
 
 void Configuration::setGitExecutable(const std::string &value)
 {
-	gitSection_->insert(Names::Git::executable, value);
+	executablesSection_->insert(Names::Executables::git, value);
 }
 
 bool Configuration::cmakeExecutable(std::string &value) const
 {
-	return retrieveString(cmakeSection_, Names::CMake::cmakeExecutable, value);
+	return retrieveString(executablesSection_, Names::Executables::cmake, value);
 }
 
 void Configuration::setCMakeExecutable(const std::string &value)
 {
-	cmakeSection_->insert(Names::CMake::cmakeExecutable, value);
+	executablesSection_->insert(Names::Executables::cmake, value);
 }
 
 bool Configuration::ninjaExecutable(std::string &value) const
 {
-	return retrieveString(cmakeSection_, Names::CMake::ninjaExecutable, value);
+	return retrieveString(executablesSection_, Names::Executables::ninja, value);
 }
 
 void Configuration::setNinjaExecutable(const std::string &value)
 {
-	cmakeSection_->insert(Names::CMake::ninjaExecutable, value);
+	executablesSection_->insert(Names::Executables::ninja, value);
 }
 
 bool Configuration::emcmakeExecutable(std::string &value) const
 {
-	return retrieveString(cmakeSection_, Names::CMake::emcmakeExecutable, value);
+	return retrieveString(executablesSection_, Names::Executables::emcmake, value);
 }
 
 void Configuration::setEmcmakeExecutable(const std::string &value)
 {
-	cmakeSection_->insert(Names::CMake::emcmakeExecutable, value);
+	executablesSection_->insert(Names::Executables::emcmake, value);
 }
 
 bool Configuration::withEmscripten() const
@@ -286,11 +286,11 @@ bool Configuration::retrieveString(const std::shared_ptr<cpptoml::table> &sectio
 
 void Configuration::retrieveSections()
 {
-	gitSection_ = root_->get_table(Names::Git::table);
-	if (gitSection_ == nullptr)
+	executablesSection_ = root_->get_table(Names::Executables::table);
+	if (executablesSection_ == nullptr)
 	{
-		gitSection_ = cpptoml::make_table();
-		root_->insert(Names::Git::table, gitSection_);
+		executablesSection_ = cpptoml::make_table();
+		root_->insert(Names::Executables::table, executablesSection_);
 	}
 
 	cmakeSection_ = root_->get_table(Names::CMake::table);

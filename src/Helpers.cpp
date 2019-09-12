@@ -28,10 +28,10 @@ const char *EndColor = "\033[0m";
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
 
-char *Helpers::getEnv(const char *name)
+const char *Helpers::getEnvironment(const char *name)
 {
 #ifdef _WIN32
-	const int MaxLength = 256;
+	const int MaxLength = 2048;
 	static char buffer[MaxLength];
 	const DWORD numChars = GetEnvironmentVariable(name, buffer, MaxLength);
 	if (numChars == 0 || numChars > MaxLength)
@@ -41,6 +41,34 @@ char *Helpers::getEnv(const char *name)
 #else
 	return getenv(name);
 #endif
+}
+
+bool Helpers::setEnvironment(const char *name, const char *value)
+{
+#ifdef _WIN32
+	return SetEnvironmentVariable(name, value);
+#else
+	const int retVal = setenv(name, value, 1);
+	return (retVal == 0);
+#endif
+}
+
+bool Helpers::addDirToPath(const char *directory)
+{
+	const char *oldPath = getEnvironment("PATH");
+	if (oldPath == nullptr)
+		return false;
+
+	std::string newPath(directory);
+#ifdef _WIN32
+	newPath.append(";");
+#else
+	newPath.append(":");
+#endif
+	newPath.append(oldPath);
+	const bool retVal = setEnvironment("PATH", newPath.data());
+
+	return retVal;
 }
 
 bool Helpers::checkMinVersion(unsigned int major, unsigned int minor, unsigned int patch, unsigned int minMajor, unsigned int minMinor, unsigned int minPatch)

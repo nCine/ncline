@@ -186,14 +186,14 @@ bool CMakeCommand::checkPredefinedLocations()
 #if defined(_WIN32)
 	std::string programsToCmake = "CMake/bin/cmake.exe";
 
-	if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToCmake).data()))
+	if (fs::canAccess(fs::joinPath(Helpers::getEnvironment("ProgramW6432"), programsToCmake).data()))
 	{
-		executable_ = fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToCmake);
+		executable_ = fs::joinPath(Helpers::getEnvironment("ProgramW6432"), programsToCmake);
 		isAccessible = true;
 	}
-	else if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToCmake).data()))
+	else if (fs::canAccess(fs::joinPath(Helpers::getEnvironment("ProgramFiles"), programsToCmake).data()))
 	{
-		executable_ = fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToCmake);
+		executable_ = fs::joinPath(Helpers::getEnvironment("ProgramFiles"), programsToCmake);
 		isAccessible = true;
 	}
 #elif defined(__APPLE__)

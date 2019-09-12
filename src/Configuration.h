@@ -67,7 +67,7 @@ class Configuration
 
   private:
 	std::shared_ptr<cpptoml::table> root_;
-	std::shared_ptr<cpptoml::table> gitSection_;
+	std::shared_ptr<cpptoml::table> executablesSection_;
 	std::shared_ptr<cpptoml::table> cmakeSection_;
 	std::shared_ptr<cpptoml::table> ncineSection_;
 

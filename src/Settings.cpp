@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include "Configuration.h"
 #include "CMakeCommand.h"
+#include "Process.h"
 #include "version.h"
 #include <iostream>
 #include <clipp.h>
@@ -75,6 +76,11 @@ bool Settings::parseArguments(int argc, char **argv)
 
 	auto &buildTypeMode = CMakeCommand::generatorIsMultiConfig() ? buildMode : confMode;
 	buildTypeMode.push_back(command("debug").set(buildType_, BuildType::DEBUG) | command("release").set(buildType_, BuildType::RELEASE).doc("choose debug or release build type"));
+
+	auto dryRunOption = option("-dry-run").set(Process::dryRun, true).doc("show the commands to execute without executing them");
+	downloadMode.push_back(dryRunOption);
+	confMode.push_back(dryRunOption);
+	buildMode.push_back(dryRunOption);
 
 	auto cli = ((setMode | downloadMode | confMode | buildMode |
 	             command("help").set(mode_, Mode::HELP).doc("show help") |

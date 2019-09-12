@@ -42,6 +42,15 @@ GitCommand::GitCommand()
 			executable_ = "git";
 	}
 
+	// Allow CMake ExternalProject to find git if it's not already in the path
+	std::string gitDir = fs::dirName(executable_.data());
+	if (gitDir.empty() == false && gitDir != ".")
+	{
+		gitDir = fs::absolutePath(gitDir.data());
+		Helpers::info("Add Git directory to path: ", gitDir.data());
+		Helpers::addDirToPath(gitDir.data());
+	}
+
 	if (executable_.find(' ') != std::string::npos)
 		executable_ = "\"" + executable_ + "\"";
 
@@ -184,14 +193,14 @@ bool GitCommand::checkPredefinedLocations()
 #if defined(_WIN32)
 	std::string programsToGit = "Git/bin/git.exe";
 
-	if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToGit).data()))
+	if (fs::canAccess(fs::joinPath(Helpers::getEnvironment("ProgramW6432"), programsToGit).data()))
 	{
-		executable_ = fs::joinPath(Helpers::getEnv("ProgramW6432"), programsToGit);
+		executable_ = fs::joinPath(Helpers::getEnvironment("ProgramW6432"), programsToGit);
 		isAccessible = true;
 	}
-	else if (fs::canAccess(fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToGit).data()))
+	else if (fs::canAccess(fs::joinPath(Helpers::getEnvironment("ProgramFiles"), programsToGit).data()))
 	{
-		executable_ = fs::joinPath(Helpers::getEnv("ProgramFiles"), programsToGit);
+		executable_ = fs::joinPath(Helpers::getEnvironment("ProgramFiles"), programsToGit);
 		isAccessible = true;
 	}
 #endif
