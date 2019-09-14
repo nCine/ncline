@@ -21,7 +21,6 @@ namespace Executables {
 
 namespace CMake {
 	const char *table = "cmake";
-	const char *withEmscripten = "emscripten";
 	const char *withNinja = "ninja";
 	const char *withMinGW = "mingw";
 	const char *vsVersion = "vs_version";
@@ -29,6 +28,10 @@ namespace CMake {
 
 namespace nCine {
 	const char *table = "ncine";
+	const char *platform = "platform";
+	const char *platformDesktop = "desktop";
+	const char *platformAndroid = "android";
+	const char *platformEmscripten = "emscripten";
 	const char *compiler = "compiler";
 	const char *compilerGCC = "gcc";
 	const char *compilerClang = "clang";
@@ -36,6 +39,17 @@ namespace nCine {
 	const char *branch = "branch";
 	const char *ncineDir = "ncine_dir";
 	const char *gameName = "game_name";
+}
+
+namespace Android {
+	const char *table = "android";
+	const char *architecture = "architecture";
+	const char *archARMv7a = "armeabi-v7a";
+	const char *archARM64 = "arm64-v8a";
+	const char *archX86_64 = "x86_64";
+	const char *sdkDir = "sdk_dir";
+	const char *ndkDir = "ndk_dir";
+	const char *gradleDir = "gradle_dir";
 }
 
 }
@@ -123,14 +137,38 @@ void Configuration::setEmcmakeExecutable(const std::string &value)
 	executablesSection_->insert(Names::Executables::emcmake, value);
 }
 
-bool Configuration::withEmscripten() const
+Configuration::Platform Configuration::platform() const
 {
-	return cmakeSection_->get_as<bool>(Names::CMake::withEmscripten).value_or(false);
+	auto name = ncineSection_->get_as<std::string>(Names::nCine::platform);
+	if (name)
+	{
+		if (*name == Names::nCine::platformDesktop)
+			return Platform::DESKTOP;
+		else if (*name == Names::nCine::platformAndroid)
+			return Platform::ANDROID;
+		else if (*name == Names::nCine::platformEmscripten)
+			return Platform::EMSCRIPTEN;
+	}
+	return Platform::DESKTOP;
 }
 
-void Configuration::setWithEmscripten(bool value)
+void Configuration::setPlatform(Platform platform)
 {
-	cmakeSection_->insert(Names::CMake::withEmscripten, value);
+	switch (platform)
+	{
+		case Platform::DESKTOP:
+			ncineSection_->insert(Names::nCine::platform, Names::nCine::platformDesktop);
+			break;
+		case Platform::ANDROID:
+			ncineSection_->insert(Names::nCine::platform, Names::nCine::platformAndroid);
+			break;
+		case Platform::EMSCRIPTEN:
+			ncineSection_->insert(Names::nCine::platform, Names::nCine::platformEmscripten);
+			break;
+		case Platform::UNSPECIFIED:
+			ncineSection_->insert(Names::nCine::platform, "");
+			break;
+	}
 }
 
 bool Configuration::withNinja() const
@@ -195,6 +233,70 @@ void Configuration::setCompiler(Compiler compiler)
 			ncineSection_->insert(Names::nCine::compiler, "");
 			break;
 	}
+}
+
+Configuration::AndroidArch Configuration::androidArch() const
+{
+	auto name = androidSection_->get_as<std::string>(Names::Android::architecture);
+	if (name)
+	{
+		if (*name == Names::Android::archARMv7a)
+			return AndroidArch::ARMEABI_V7A;
+		else if (*name == Names::Android::archARM64)
+			return AndroidArch::ARM64_V8A;
+		else if (*name == Names::Android::archX86_64)
+			return AndroidArch::X86_64;
+	}
+	return AndroidArch::UNSPECIFIED;
+}
+
+void Configuration::setAndroidArch(AndroidArch arch)
+{
+	switch (arch)
+	{
+		case AndroidArch::ARMEABI_V7A:
+			androidSection_->insert(Names::Android::architecture, Names::Android::archARMv7a);
+			break;
+		case AndroidArch::ARM64_V8A:
+			androidSection_->insert(Names::Android::architecture, Names::Android::archARM64);
+			break;
+		case AndroidArch::X86_64:
+			androidSection_->insert(Names::Android::architecture, Names::Android::archX86_64);
+			break;
+		case AndroidArch::UNSPECIFIED:
+			androidSection_->insert(Names::Android::architecture, "");
+			break;
+	}
+}
+
+bool Configuration::androidSdkDir(std::string &value) const
+{
+	return retrieveString(androidSection_, Names::Android::sdkDir, value);
+}
+
+void Configuration::setAndroidSdkDir(const std::string &value)
+{
+	androidSection_->insert(Names::Android::sdkDir, value);
+}
+
+bool Configuration::androidNdkDir(std::string &value) const
+{
+	return retrieveString(androidSection_, Names::Android::ndkDir, value);
+}
+
+void Configuration::setAndroidNdkDir(const std::string &value)
+{
+	androidSection_->insert(Names::Android::ndkDir, value);
+}
+
+bool Configuration::gradleDir(std::string &value) const
+{
+	return retrieveString(androidSection_, Names::Android::gradleDir, value);
+}
+
+void Configuration::setGradleDir(const std::string &value)
+{
+	androidSection_->insert(Names::Android::gradleDir, value);
 }
 
 bool Configuration::engineCMakeArguments(std::string &value) const
@@ -305,5 +407,12 @@ void Configuration::retrieveSections()
 	{
 		ncineSection_ = cpptoml::make_table();
 		root_->insert(Names::nCine::table, ncineSection_);
+	}
+
+	androidSection_ = root_->get_table(Names::Android::table);
+	if (androidSection_ == nullptr)
+	{
+		androidSection_ = cpptoml::make_table();
+		root_->insert(Names::Android::table, androidSection_);
 	}
 }

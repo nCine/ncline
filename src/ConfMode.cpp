@@ -20,6 +20,9 @@ const char *settingsToBuildTypeString(Settings::BuildType buildType)
 
 bool preferredCompilerArgs(std::string &cmakeArguments)
 {
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
+		return false;
+
 	bool argumentsAdded = true;
 
 	switch (config().compiler())
@@ -42,10 +45,61 @@ bool buildTypeArg(std::string &cmakeArguments, const Settings &settings)
 {
 	bool argumentsAdded = false;
 
-	if (CMakeCommand::generatorIsMultiConfig() == false)
+	// When compiling Android with the Visual Studio generator the CMAKE_BUILD_TYPE variable needs to be set
+	if (CMakeCommand::generatorIsMultiConfig() == false || config().platform() == Configuration::Platform::ANDROID)
 	{
 		cmakeArguments += " -D CMAKE_BUILD_TYPE=";
 		cmakeArguments += settingsToBuildTypeString(settings.buildType());
+		argumentsAdded = true;
+	}
+
+	return argumentsAdded;
+}
+
+bool androidArchArg(std::string &cmakeArguments)
+{
+	if (config().platform() != Configuration::Platform::ANDROID)
+		return false;
+
+	bool argumentsAdded = true;
+
+	switch (config().androidArch())
+	{
+		case Configuration::AndroidArch::ARMEABI_V7A:
+			cmakeArguments += " -D ARCH=armeabi-v7a";
+			break;
+		case Configuration::AndroidArch::ARM64_V8A:
+		case Configuration::AndroidArch::UNSPECIFIED:
+			cmakeArguments += " -D ARCH=arm64-v8a";
+			break;
+		case Configuration::AndroidArch::X86_64:
+			cmakeArguments += " -D ARCH=x86_64";
+			break;
+	}
+
+	return argumentsAdded;
+}
+
+bool engineAndroidArg(std::string &cmakeArguments)
+{
+	bool argumentsAdded = false;
+
+	if (config().platform() == Configuration::Platform::ANDROID)
+	{
+		cmakeArguments += " -D NCINE_BUILD_ANDROID=ON";
+		argumentsAdded = true;
+	}
+
+	return argumentsAdded;
+}
+
+bool gameAndroidArg(std::string &cmakeArguments)
+{
+	bool argumentsAdded = false;
+
+	if (config().platform() == Configuration::Platform::ANDROID)
+	{
+		cmakeArguments += " -D PACKAGE_BUILD_ANDROID=ON -D PACKAGE_ASSEMBLE_APK=ON";
 		argumentsAdded = true;
 	}
 
@@ -72,6 +126,24 @@ bool ncineDirArg(std::string &cmakeArguments)
 	return argumentsAdded;
 }
 
+void configureAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
+{
+	Helpers::info("Configure the Android libraries");
+
+	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
+	Helpers::buildDir(buildDir, settings);
+
+	std::string arguments;
+	androidArchArg(arguments);
+	buildTypeArg(arguments, settings);
+
+#ifdef _WIN32
+	cmake.configure(Helpers::nCineAndroidLibrariesSourceDir(), buildDir.data(), "NMake Makefiles", nullptr, arguments.empty() ? nullptr : arguments.data());
+#else
+	cmake.configure(Helpers::nCineAndroidLibrariesSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
+#endif
+}
+
 void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 {
 	Helpers::info("Configure the libraries");
@@ -80,8 +152,7 @@ void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 	Helpers::buildDir(buildDir, settings);
 
 	std::string arguments;
-	if (config().withEmscripten() == false)
-		preferredCompilerArgs(arguments);
+	preferredCompilerArgs(arguments);
 	buildTypeArg(arguments, settings);
 
 	cmake.configure(Helpers::nCineLibrariesSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
@@ -95,9 +166,9 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 	Helpers::buildDir(buildDir, settings);
 
 	std::string arguments;
-	if (config().withEmscripten() == false)
-		preferredCompilerArgs(arguments);
+	preferredCompilerArgs(arguments);
 	buildTypeArg(arguments, settings);
+	engineAndroidArg(arguments);
 	additionalArgs(arguments);
 
 	cmake.configure(Helpers::nCineSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
@@ -111,9 +182,9 @@ void configureGame(CMakeCommand &cmake, const Settings &settings, const std::str
 	Helpers::buildDir(buildDir, settings);
 
 	std::string arguments;
-	if (config().withEmscripten() == false)
-		preferredCompilerArgs(arguments);
+	preferredCompilerArgs(arguments);
 	buildTypeArg(arguments, settings);
+	gameAndroidArg(arguments);
 	ncineDirArg(arguments);
 
 	cmake.configure(gameName.data(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
@@ -132,7 +203,10 @@ void ConfMode::perform(CMakeCommand &cmake, const Settings &settings)
 	switch (settings.target())
 	{
 		case Settings::Target::LIBS:
-			configureLibraries(cmake, settings);
+			if (config().platform() == Configuration::Platform::ANDROID)
+				configureAndroidLibraries(cmake, settings);
+			else
+				configureLibraries(cmake, settings);
 			break;
 		case Settings::Target::ENGINE:
 			configureEngine(cmake, settings);

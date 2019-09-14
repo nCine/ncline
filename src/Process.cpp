@@ -117,6 +117,9 @@ bool Process::executeCommand(const char *command, std::string *output, Echo echo
 		return false;
 	}
 
+	if (output)
+		output->clear();
+
 	while (fgets(buffer, MaxLength, fp))
 	{
 		if (output)

@@ -34,6 +34,16 @@ void buildLibraries(CMakeCommand &cmake, const Settings &settings)
 		cmake.build(buildDir.data());
 }
 
+void buildAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
+{
+	Helpers::info("Build the Android libraries");
+
+	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
+	Helpers::buildDir(buildDir, settings);
+
+	cmake.build(buildDir.data());
+}
+
 void buildEngine(CMakeCommand &cmake, const Settings &settings)
 {
 	Helpers::info("Build the engine");
@@ -86,7 +96,10 @@ void BuildMode::perform(CMakeCommand &cmake, const Settings &settings)
 	switch (settings.target())
 	{
 		case Settings::Target::LIBS:
-			buildLibraries(cmake, settings);
+			if (config().platform() == Configuration::Platform::ANDROID)
+				buildAndroidLibraries(cmake, settings);
+			else
+				buildLibraries(cmake, settings);
 			break;
 		case Settings::Target::ENGINE:
 			buildEngine(cmake, settings);

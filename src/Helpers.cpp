@@ -146,11 +146,13 @@ void Helpers::error(const char *msg1, const char *msg2)
 
 void Helpers::buildDir(std::string &binaryDir, const Settings &settings)
 {
-	if (config().withEmscripten())
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
 		binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-web-debug" : "-web-release";
 	else
 	{
-		if (CMakeCommand::generatorIsMultiConfig())
+		// nCine-android-libraries have a suffix based on the build type also on Windows
+		if (CMakeCommand::generatorIsMultiConfig() &&
+		    (config().platform() != Configuration::Platform::ANDROID || settings.target() != Settings::Target::LIBS))
 			binaryDir += "-build";
 		else
 			binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";

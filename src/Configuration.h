@@ -11,10 +11,28 @@ class table;
 class Configuration
 {
   public:
+	enum class Platform
+	{
+		DESKTOP,
+		ANDROID,
+		EMSCRIPTEN,
+
+		UNSPECIFIED
+	};
+
 	enum class Compiler
 	{
 		GCC,
 		CLANG,
+
+		UNSPECIFIED
+	};
+
+	enum class AndroidArch
+	{
+		ARMEABI_V7A,
+		ARM64_V8A,
+		X86_64,
 
 		UNSPECIFIED
 	};
@@ -33,8 +51,8 @@ class Configuration
 	bool emcmakeExecutable(std::string &value) const;
 	void setEmcmakeExecutable(const std::string &value);
 
-	bool withEmscripten() const;
-	void setWithEmscripten(bool value);
+	Platform platform() const;
+	void setPlatform(Platform platform);
 
 	bool withNinja() const;
 	void setWithNinja(bool value);
@@ -47,6 +65,18 @@ class Configuration
 
 	Compiler compiler() const;
 	void setCompiler(Compiler compiler);
+
+	AndroidArch androidArch() const;
+	void setAndroidArch(AndroidArch arch);
+
+	bool androidSdkDir(std::string &value) const;
+	void setAndroidSdkDir(const std::string &value);
+
+	bool androidNdkDir(std::string &value) const;
+	void setAndroidNdkDir(const std::string &value);
+
+	bool gradleDir(std::string &value) const;
+	void setGradleDir(const std::string &value);
 
 	bool engineCMakeArguments(std::string &value) const;
 	void setEngineCMakeArguments(const std::string &value);
@@ -70,6 +100,7 @@ class Configuration
 	std::shared_ptr<cpptoml::table> executablesSection_;
 	std::shared_ptr<cpptoml::table> cmakeSection_;
 	std::shared_ptr<cpptoml::table> ncineSection_;
+	std::shared_ptr<cpptoml::table> androidSection_;
 
 	bool hasString(const std::shared_ptr<cpptoml::table> &section, const char *name) const;
 	bool retrieveString(const std::shared_ptr<cpptoml::table> &section, const char *name, std::string &dest) const;

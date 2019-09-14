@@ -57,6 +57,63 @@ CMakeCommand::CMakeCommand()
 
 	if (config().emcmakeExecutable(emcmakeExecutable_) == false)
 		emcmakeExecutable_ = "emcmake";
+
+	if (config().platform() == Configuration::Platform::ANDROID)
+	{
+		std::string androidSdkDir;
+		if (config().androidSdkDir(androidSdkDir))
+		{
+			if (fs::isDirectory(androidSdkDir.data()))
+			{
+				Helpers::info("Set the ANDROID_HOME environment variable to: ", androidSdkDir.data());
+				Helpers::setEnvironment("ANDROID_HOME", androidSdkDir.data());
+			}
+			else
+				Helpers::error("The specified Android SDK directory does not exists: ", androidSdkDir.data());
+		}
+
+		std::string androidNdkDir;
+		if (config().androidNdkDir(androidNdkDir))
+		{
+			if (fs::isDirectory(androidNdkDir.data()))
+			{
+				Helpers::info("Set the ANDROID_NDK_HOME environment variable to: ", androidNdkDir.data());
+				Helpers::setEnvironment("ANDROID_NDK_HOME", androidNdkDir.data());
+			}
+			else
+				Helpers::error("The specified Android NDK directory does not exists: ", androidNdkDir.data());
+		}
+
+		// Adding Gradle to the path now, even if it is only needed when building an APK
+		std::string gradleDir;
+		if (config().gradleDir(gradleDir))
+		{
+			gradleDir = fs::joinPath(gradleDir, "bin");
+			if (fs::isDirectory(gradleDir.data()))
+			{
+				Helpers::info("Add Gradle binary directory to path: ", gradleDir.data());
+				Helpers::addDirToPath(gradleDir.data());
+			}
+			else
+				Helpers::error("The specified Gradle binary directory does not exists: ", gradleDir.data());
+		}
+
+#ifdef _WIN32
+		// Adding NMake to the path now, even if it is only needed when building
+		std::string nmakeExecutable = findNMake();
+		if (nmakeExecutable.empty() == false)
+		{
+			std::string nmakeDir = fs::dirName(nmakeExecutable.data());
+			if (nmakeDir.empty() == false)
+			{
+				Helpers::info("Add NMake directory to path: ", nmakeDir.data());
+				Helpers::addDirToPath(nmakeDir.data());
+			}
+		}
+		else
+			Helpers::error("Cannot find NMake executable");
+#endif
+	}
 }
 
 ///////////////////////////////////////////////////////////
@@ -65,7 +122,7 @@ CMakeCommand::CMakeCommand()
 
 bool CMakeCommand::generatorIsMultiConfig()
 {
-	if (config().withEmscripten())
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
 		return false;
 
 #ifdef _WIN32
@@ -78,15 +135,14 @@ bool CMakeCommand::generatorIsMultiConfig()
 #endif
 }
 
-bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char *arguments)
+bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char *generator, const char *platform, const char *arguments)
 {
 	assert(found_);
 	assert(srcDir);
 	assert(binDir);
-	output_.clear();
 
 	std::string configureCommand;
-	if (config().withEmscripten())
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
 		configureCommand = emcmakeExecutable_ + " " + executable_;
 	else
 		configureCommand = executable_;
@@ -94,12 +150,12 @@ bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char 
 	snprintf(buffer, MaxLength, " -S \"%s\" -B \"%s\"", srcDir, binDir);
 	configureCommand += buffer;
 
-	if (config().withEmscripten() == false)
+	if (generator)
 	{
-		if (platform())
-			snprintf(buffer, MaxLength, " -G \"%s\" -A %s", generator(), platform());
+		if (platform)
+			snprintf(buffer, MaxLength, " -G \"%s\" -A %s", generator, platform);
 		else
-			snprintf(buffer, MaxLength, " -G \"%s\"", generator());
+			snprintf(buffer, MaxLength, " -G \"%s\"", generator);
 		configureCommand += buffer;
 	}
 
@@ -114,6 +170,11 @@ bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char 
 	return executed;
 }
 
+bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char *arguments)
+{
+	return configure(srcDir, binDir, generator(), platform(), arguments);
+}
+
 bool CMakeCommand::configure(const char *srcDir, const char *binDir)
 {
 	return configure(srcDir, binDir, nullptr);
@@ -123,7 +184,6 @@ bool CMakeCommand::build(const char *buildDir, const char *config, const char *t
 {
 	assert(found_);
 	assert(buildDir);
-	output_.clear();
 
 	snprintf(buffer, MaxLength, "%s --build \"%s\" -j %u", executable_.data(), buildDir, std::thread::hardware_concurrency());
 	std::string buildCommand = buffer;
@@ -156,6 +216,9 @@ bool CMakeCommand::isUpdated() const
 
 const char *CMakeCommand::generator() const
 {
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
+		return nullptr;
+
 #ifdef _WIN32
 	if (config().withMinGW())
 		return "MSYS Makefiles";
@@ -209,8 +272,6 @@ bool CMakeCommand::checkPredefinedLocations()
 
 void CMakeCommand::findNinja()
 {
-	output_.clear();
-
 	if (config().ninjaExecutable(ninjaExecutable_) == false)
 		ninjaExecutable_ = "ninja";
 
@@ -221,4 +282,38 @@ void CMakeCommand::findNinja()
 	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 	if (executed)
 		ninjaFound_ = sscanf(output_.data(), "%u.%u.%u", &ninjaVersion_[0], &ninjaVersion_[1], &ninjaVersion_[2]);
+}
+
+std::string CMakeCommand::findNMake()
+{
+	std::string nmakeExcutable;
+
+#ifdef _WIN32
+	std::string programsToVsWhere = "Microsoft Visual Studio/Installer/vswhere.exe";
+	std::string vswhereExecutable;
+
+	std::string programsPath = Helpers::getEnvironment("PROGRAMFILES(X86)");
+	if (programsPath.empty())
+		programsPath = Helpers::getEnvironment("ProgramFiles");
+
+	if (fs::canAccess(fs::joinPath(programsPath, programsToVsWhere).data()))
+	{
+		vswhereExecutable = fs::joinPath(programsPath, programsToVsWhere);
+		if (vswhereExecutable.find(' ') != std::string::npos)
+			vswhereExecutable = "\"" + vswhereExecutable + "\"";
+
+		snprintf(buffer, MaxLength, "%s -latest -find VC\\Tools\\MSVC\\**\\nmake.exe", vswhereExecutable.data());
+		const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
+		if (executed)
+		{
+			if (output_.find('\n'))
+				nmakeExcutable = output_.substr(0, output_.find('\n'));
+
+			if (fs::canAccess(nmakeExcutable.data()) == false)
+				nmakeExcutable.clear();
+		}
+	}
+#endif
+
+	return nmakeExcutable;
 }

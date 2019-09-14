@@ -29,12 +29,42 @@ void appendCompilerString(std::string &branchName)
 	}
 }
 
+void appendAndroidArchString(std::string &branchName)
+{
+	switch (config().androidArch())
+	{
+		case Configuration::AndroidArch::ARMEABI_V7A:
+			branchName += "-armeabi-v7a";
+			break;
+		case Configuration::AndroidArch::ARM64_V8A:
+		case Configuration::AndroidArch::UNSPECIFIED:
+			branchName += "-arm64-v8a";
+			break;
+		case Configuration::AndroidArch::X86_64:
+			branchName += "-x86_64";
+			break;
+	}
+}
+
 const char *librariesArtifactsBranch()
 {
-	// TODO: Add Android branches
+	if (config().platform() == Configuration::Platform::ANDROID)
+	{
+		switch (config().androidArch())
+		{
+			case Configuration::AndroidArch::ARMEABI_V7A:
+				return "android-libraries-armeabi-v7a";
+			case Configuration::AndroidArch::ARM64_V8A:
+			case Configuration::AndroidArch::UNSPECIFIED:
+				return "android-libraries-arm64-v8a";
+			case Configuration::AndroidArch::X86_64:
+				return "android-libraries-x86_64";
+		}
+	}
 
-	if (config().withEmscripten())
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
 		return "libraries-emscripten-emcc";
+
 #if defined(__APPLE__)
 	return "libraries-darwin-appleclang";
 #elif defined(_WIN32)
@@ -57,8 +87,6 @@ const char *librariesArtifactsBranch()
 
 const char *artifactsBranch(const char *project)
 {
-	// TODO: Add Android branches for non engine projects
-
 	assert(project);
 	static std::string branchName;
 
@@ -66,9 +94,16 @@ const char *artifactsBranch(const char *project)
 	config().branchName(configBranchName);
 
 	branchName = project;
+	const bool isEngine = (branchName == "nCine");
 	branchName += "-" + configBranchName;
 
-	if (config().withEmscripten())
+	if (config().platform() == Configuration::Platform::ANDROID && isEngine == false)
+	{
+		branchName += "-android";
+		appendAndroidArchString(branchName);
+		branchName += "-Debug";
+	}
+	else if (config().platform() == Configuration::Platform::EMSCRIPTEN)
 		branchName += "-emscripten-emcc";
 	else
 	{
@@ -112,7 +147,10 @@ void downloadLibrariesArtifact(GitCommand &git)
 
 void downloadLibraries(GitCommand &git)
 {
-	git.clone(Helpers::nCineLibrariesRepositoryUrl());
+	if (config().platform() == Configuration::Platform::ANDROID)
+		git.clone(Helpers::nCineAndroidLibrariesRepositoryUrl());
+	else
+		git.clone(Helpers::nCineLibrariesRepositoryUrl());
 }
 
 void downloadEngineArtifact(GitCommand &git)

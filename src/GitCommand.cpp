@@ -69,7 +69,6 @@ bool GitCommand::clone(const char *repositoryUrl, const char *branch, unsigned i
 	assert(found_);
 	assert(repositoryUrl);
 	assert(branch);
-	output_.clear();
 
 	std::string cloneCommand = executable() + " clone " + repositoryUrl;
 	cloneCommand += " --single-branch --branch ";
@@ -87,7 +86,6 @@ bool GitCommand::clone(const char *repositoryUrl)
 {
 	assert(found_);
 	assert(repositoryUrl);
-	output_.clear();
 
 	snprintf(buffer, MaxLength, "%s clone %s", executable_.data(), repositoryUrl);
 	const bool executed = Process::executeCommand(buffer, output_);
@@ -99,7 +97,6 @@ bool GitCommand::checkout(const char *repositoryDir, const char *branch, const c
 	assert(found_);
 	assert(repositoryDir);
 	assert(branch);
-	output_.clear();
 
 	const std::string repositoryGitDir = fs::joinPath(repositoryDir, ".git");
 
@@ -127,31 +124,26 @@ bool GitCommand::checkRepositoryVersion(const char *repositoryDir, std::string &
 		bool hasTag = false;
 		char tagName[MaxLength];
 
-		output_.clear();
 		snprintf(buffer, MaxLength, "%s --git-dir=%s rev-list --count HEAD", executable_.data(), repositoryGitDir.data());
 		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
 		strncpyWrapper(revCount, MaxLength, output_.data(), MaxLength - 1);
 
-		output_.clear();
 		snprintf(buffer, MaxLength, "%s --git-dir=%s rev-parse --short HEAD", executable_.data(), repositoryGitDir.data());
 		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
 		strncpyWrapper(shortHash, MaxLength, output_.data(), MaxLength - 1);
 
-		output_.clear();
 		snprintf(buffer, MaxLength, "%s --git-dir=%s log -1 --format=%%ad --date=format:%%Y.%%m", executable_.data(), repositoryGitDir.data());
 		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
 		strncpyWrapper(lastCommitDate, MaxLength, output_.data(), MaxLength - 1);
 
-		output_.clear();
 		snprintf(buffer, MaxLength, "%s --git-dir=%s rev-parse --abbrev-ref HEAD", executable_.data(), repositoryGitDir.data());
 		executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 		assert(executed);
 		strncpyWrapper(branchName, MaxLength, output_.data(), MaxLength - 1);
 
-		output_.clear();
 		snprintf(buffer, MaxLength, "%s --git-dir=%s describe --tags --exact-match HEAD", executable_.data(), repositoryGitDir.data());
 		hasTag = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 

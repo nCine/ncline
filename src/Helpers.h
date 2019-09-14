@@ -24,8 +24,10 @@ class Helpers
 	static void buildDir(std::string &binaryDir, const Settings &settings);
 
 	static const char *nCineLibrariesRepositoryUrl() { return "https://github.com/nCine/nCine-libraries.git"; }
+	static const char *nCineAndroidLibrariesRepositoryUrl() { return "https://github.com/nCine/nCine-android-libraries.git"; }
 	static const char *nCineLibrariesArtifactsRepositoryUrl() { return "https://github.com/nCine/nCine-libraries-artifacts.git"; }
 	static const char *nCineLibrariesSourceDir() { return "nCine-libraries"; }
+	static const char *nCineAndroidLibrariesSourceDir() { return "nCine-android-libraries"; }
 	static const char *nCineLibrariesArtifactsSourceDir() { return "nCine-libraries-artifacts"; }
 
 	static const char *nCineRepositoryUrl() { return "https://github.com/nCine/nCine.git"; }
