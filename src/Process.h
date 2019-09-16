@@ -9,6 +9,7 @@ class Process
 	enum class Echo
 	{
 		DISABLED,
+		COMMAND_ONLY,
 		ENABLED
 	};
 

@@ -61,6 +61,7 @@ bool Settings::parseArguments(int argc, char **argv)
 	                (option("-cmake-exe") & value("executable").call([&](const std::string &cmakeExe) { config().setCMakeExecutable(cmakeExe); })).doc("set the CMake command executable"),
 	                (option("-ninja-exe") & value("executable").call([&](const std::string &ninjaExe) { config().setNinjaExecutable(ninjaExe); })).doc("set the Ninja command executable"),
 	                (option("-emcmake-exe") & value("executable").call([&](const std::string &emcmakeExe) { config().setEmcmakeExecutable(emcmakeExe); })).doc("set the Emscripten emcmake command executable"),
+	                (option("-prefix-path") & value("path").call([&](const std::string &directory) { config().setCMakePrefixPath(directory); })).doc("set the CMAKE_PREFIX_PATH variable for the engine"),
 	                (option("-cmake-args") & value("args").call([&](const std::string &cmakeArgs) { config().setEngineCMakeArguments(cmakeArgs); })).doc("additional CMake arguments to configure the engine"),
 	                (option("-branch") & value("name").call([&](const std::string &branchName) { config().setBranchName(branchName); })).doc("branch name for engine and projects"),
 	                (option("-ncine-dir") & value("path").call([&](const std::string &directory) { config().setEngineDir(directory); })).doc("path to the CMake script directory inside a compiled or installed engine"),

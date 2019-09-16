@@ -84,6 +84,10 @@ class Configuration
 	bool branchName(std::string &value) const;
 	void setBranchName(const std::string &value);
 
+	bool hasCMakePrefixPath() const;
+	bool cmakePrefixPath(std::string &value) const;
+	void setCMakePrefixPath(const std::string &value);
+
 	bool hasEngineDir() const;
 	bool engineDir(std::string &value) const;
 	void setEngineDir(const std::string &value);

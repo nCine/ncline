@@ -10,6 +10,8 @@ class CMakeCommand
 	static bool generatorIsMultiConfig();
 	static bool generatorIsVisualStudio() { return generatorIsMultiConfig(); }
 
+	bool toolsMode(const char *command);
+
 	bool configure(const char *srcDir, const char *binDir, const char *generator, const char *platform, const char *arguments);
 	bool configure(const char *srcDir, const char *binDir, const char *arguments);
 	bool configure(const char *srcDir, const char *binDir);

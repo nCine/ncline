@@ -29,6 +29,7 @@ class Helpers
 	static const char *nCineLibrariesSourceDir() { return "nCine-libraries"; }
 	static const char *nCineAndroidLibrariesSourceDir() { return "nCine-android-libraries"; }
 	static const char *nCineLibrariesArtifactsSourceDir() { return "nCine-libraries-artifacts"; }
+	static const char *nCineExternalDir() { return "nCine-external"; }
 
 	static const char *nCineRepositoryUrl() { return "https://github.com/nCine/nCine.git"; }
 	static const char *nCineArtifactsRepositoryUrl() { return "https://github.com/nCine/nCine-artifacts.git"; }

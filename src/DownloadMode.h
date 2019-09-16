@@ -2,9 +2,10 @@
 
 class Settings;
 class GitCommand;
+class CMakeCommand;
 
 class DownloadMode
 {
   public:
-	static void perform(GitCommand &git, const Settings &settings);
+	static void perform(GitCommand &git, CMakeCommand &cmake, const Settings &settings);
 };

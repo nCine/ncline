@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 		{
 			switch (settings.mode())
 			{
-				case Settings::Mode::DOWNLOAD: DownloadMode::perform(git, settings); break;
+				case Settings::Mode::DOWNLOAD: DownloadMode::perform(git, cmake, settings); break;
 				case Settings::Mode::CONF: ConfMode::perform(cmake, settings); break;
 				case Settings::Mode::BUILD: BuildMode::perform(cmake, settings); break;
 				default: break;

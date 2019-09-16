@@ -7,6 +7,8 @@ class GitCommand
   public:
 	GitCommand();
 
+	bool customCommand(const char *repositoryDir, const char *command);
+
 	bool clone(const char *repositoryUrl, const char *branch, unsigned int depth, bool noCheckout);
 	inline bool clone(const char *repositoryUrl, const char *branch, unsigned int depth) { return clone(repositoryUrl, branch, depth, false); }
 	inline bool clone(const char *repositoryUrl, const char *branch) { return clone(repositoryUrl, branch, 0); }

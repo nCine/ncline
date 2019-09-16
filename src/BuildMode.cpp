@@ -28,10 +28,26 @@ void buildLibraries(CMakeCommand &cmake, const Settings &settings)
 	std::string buildDir = Helpers::nCineLibrariesSourceDir();
 	Helpers::buildDir(buildDir, settings);
 
+	bool hasBuilt = false;
 	if (CMakeCommand::generatorIsMultiConfig())
 		cmake.buildConfig(buildDir.data(), settingsToBuildConfigString(settings.buildType()));
 	else
-		cmake.build(buildDir.data());
+		hasBuilt = cmake.build(buildDir.data());
+
+#if !defined(_WIN32) && !defined(__APPLE__)
+	if (hasBuilt && config().hasCMakePrefixPath() == false)
+	{
+		std::string absolutePath = fs::currentDir();
+		absolutePath = fs::joinPath(absolutePath, Helpers::nCineExternalDir());
+
+		if (fs::isDirectory(absolutePath.data()))
+		{
+			config().setCMakePrefixPath(absolutePath.data());
+			config().save();
+			Helpers::info("Set 'CMAKE_PREFIX_PATH' CMake variable to: ", absolutePath.data());
+		}
+	}
+#endif
 }
 
 void buildAndroidLibraries(CMakeCommand &cmake, const Settings &settings)

@@ -64,6 +64,19 @@ GitCommand::GitCommand()
 // PUBLIC FUNCTIONS
 ///////////////////////////////////////////////////////////
 
+bool GitCommand::customCommand(const char *repositoryDir, const char *command)
+{
+	assert(found_);
+	assert(repositoryDir);
+	assert(command);
+
+	const std::string repositoryGitDir = fs::joinPath(repositoryDir, ".git");
+
+	snprintf(buffer, MaxLength, "%s --git-dir=%s %s", executable_.data(), repositoryGitDir.data(), command);
+	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::COMMAND_ONLY);
+	return executed;
+}
+
 bool GitCommand::clone(const char *repositoryUrl, const char *branch, unsigned int depth, bool noCheckout)
 {
 	assert(found_);

@@ -103,7 +103,7 @@ bool Process::executeCommand(const char *command, std::string *output, Echo echo
 {
 	assert(command);
 
-	if (echoMode == Echo::ENABLED)
+	if (echoMode != Echo::DISABLED)
 		Helpers::echo(command);
 
 	if (dryRun)

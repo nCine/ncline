@@ -135,6 +135,16 @@ bool CMakeCommand::generatorIsMultiConfig()
 #endif
 }
 
+bool CMakeCommand::toolsMode(const char *command)
+{
+	assert(found_);
+	assert(command);
+
+	snprintf(buffer, MaxLength, "%s -E %s", executable_.data(), command);
+	const bool executed = Process::executeCommand(buffer);
+	return executed;
+}
+
 bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char *generator, const char *platform, const char *arguments)
 {
 	assert(found_);

@@ -106,6 +106,16 @@ bool gameAndroidArg(std::string &cmakeArguments)
 	return argumentsAdded;
 }
 
+bool prefixPathArg(std::string &cmakeArguments)
+{
+	std::string arguments;
+	const bool argumentsAdded = config().cmakePrefixPath(arguments);
+	if (argumentsAdded)
+		cmakeArguments += " -D CMAKE_PREFIX_PATH=" + arguments;
+
+	return argumentsAdded;
+}
+
 bool additionalArgs(std::string &cmakeArguments)
 {
 	std::string arguments;
@@ -169,6 +179,7 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 	preferredCompilerArgs(arguments);
 	buildTypeArg(arguments, settings);
 	engineAndroidArg(arguments);
+	prefixPathArg(arguments);
 	additionalArgs(arguments);
 
 	cmake.configure(Helpers::nCineSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());

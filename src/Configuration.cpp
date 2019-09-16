@@ -24,6 +24,7 @@ namespace CMake {
 	const char *withNinja = "ninja";
 	const char *withMinGW = "mingw";
 	const char *vsVersion = "vs_version";
+	const char *prefixPath = "prefix_path";
 }
 
 namespace nCine {
@@ -317,6 +318,21 @@ bool Configuration::branchName(std::string &value) const
 void Configuration::setBranchName(const std::string &value)
 {
 	ncineSection_->insert(Names::nCine::branch, value);
+}
+
+bool Configuration::hasCMakePrefixPath() const
+{
+	return hasString(cmakeSection_, Names::CMake::prefixPath);
+}
+
+bool Configuration::cmakePrefixPath(std::string &value) const
+{
+	return retrieveString(cmakeSection_, Names::CMake::prefixPath, value);
+}
+
+void Configuration::setCMakePrefixPath(const std::string &value)
+{
+	cmakeSection_->insert(Names::CMake::prefixPath, value);
 }
 
 bool Configuration::hasEngineDir() const
