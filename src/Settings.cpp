@@ -1,10 +1,10 @@
+#include <iostream>
+#include <clipp.h>
 #include "Settings.h"
 #include "Configuration.h"
 #include "CMakeCommand.h"
 #include "Process.h"
 #include "version.h"
-#include <iostream>
-#include <clipp.h>
 
 using namespace clipp;
 

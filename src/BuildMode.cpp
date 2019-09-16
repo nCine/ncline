@@ -1,13 +1,10 @@
 #include <cassert>
-#include <iostream>
 #include "BuildMode.h"
 #include "CMakeCommand.h"
 #include "FileSystem.h"
 #include "Settings.h"
 #include "Configuration.h"
 #include "Helpers.h"
-
-using fs = FileSystem;
 
 namespace {
 

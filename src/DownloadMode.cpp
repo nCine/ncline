@@ -12,8 +12,6 @@
 	#include "Process.h"
 #endif
 
-using fs = FileSystem;
-
 namespace {
 
 bool gameNameIsCustom(const std::string &gameName)

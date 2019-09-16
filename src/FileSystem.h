@@ -13,3 +13,5 @@ class FileSystem
 	static bool isDirectory(const char *file);
 	static bool canAccess(const char *file);
 };
+
+using fs = FileSystem;

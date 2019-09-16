@@ -8,8 +8,6 @@
 #include "Configuration.h"
 #include "Helpers.h"
 
-using fs = FileSystem;
-
 namespace {
 
 const int MaxLength = 1024;

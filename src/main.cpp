@@ -1,4 +1,3 @@
-#include <iostream>
 #include "Configuration.h"
 #include "Settings.h"
 #include "GitCommand.h"
