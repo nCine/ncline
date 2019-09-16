@@ -1,0 +1,241 @@
+variables:
+  package_name: ncline
+  deploy_message:
+    "Push artifact from Azure Pipelines build $(Build.BuildNumber) with id $(Build.BuildId)
+
+     - $(package_name) artifact from branch '$(Build.SourceBranchName)' with commit id $(Build.SourceVersion)"
+  deploy_branch: $(package_name)-BRANCHNAME-OS-COMPILER
+
+jobs:
+- job: Linux_macOS
+  displayName: Linux and macOS
+
+  strategy:
+    matrix:
+      Linux GCC:
+        imageName: 'ubuntu-16.04'
+        CC: gcc
+        CXX: g++
+
+      Linux Clang:
+        imageName: 'ubuntu-16.04'
+        CC: clang
+        CXX: clang++
+
+      macOS:
+        imageName: 'macOS-10.14'
+
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+  - script: |
+      curl -fsSL https://cmake.org/files/v3.14/cmake-3.14.5-Linux-x86_64.sh -o cmakeinstall.sh && \
+      chmod +x cmakeinstall.sh && \
+      sudo ./cmakeinstall.sh --prefix=/usr/local --exclude-subdir && \
+      rm cmakeinstall.sh
+
+    displayName: 'Install Latest CMake on Linux'
+    condition: eq( variables['Agent.OS'], 'Linux' )
+
+  - script: |
+      git fetch --unshallow || true
+
+    displayName: 'Unshallow Git Repository for Versioning'
+
+  - script: |
+      cmake -B ../$(package_name)-build-Release -D CMAKE_BUILD_TYPE=Release
+
+    displayName: 'CMake Configuration'
+
+  - script: |
+      make -j2 -C ../$(package_name)-build-Release
+
+    displayName: 'Make'
+
+  - script: |
+      make package -C ../$(package_name)-build-Release
+
+    displayName: 'Package'
+
+  - script: |
+      git config --global user.email "pipelines@azure.com"
+      git config --global user.name "Azure Pipelines"
+
+      if [ "$(Agent.OS)" == "Linux" ]; then
+        export OS=linux
+      elif [ "$(Agent.OS)" == "Darwin" ]; then
+        export OS=darwin
+        export CC=appleclang
+      fi
+
+      cd ..
+      export DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/BRANCHNAME/'"$(Build.SourceBranchName)"'/'`
+      export DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/OS/'"$OS"'/'`
+      export DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/COMPILER/'"$CC"'/'`
+      git clone https://$MAPPED_GH_TOKEN@github.com/nCine/$(package_name)-artifacts.git >/dev/null 2>&1
+      cd $(package_name)-artifacts
+
+      git checkout $DEPLOY_BRANCH || git checkout --orphan $DEPLOY_BRANCH
+      git reset
+      git rm *
+      mv -f ../$(package_name)-build-Release/*.tar.gz .
+      git add *.tar.gz
+      git commit --amend -m "$(DEPLOY_MESSAGE)" || git commit -m "$(DEPLOY_MESSAGE)"
+      git push --force || git push --set-upstream origin $DEPLOY_BRANCH
+
+    displayName: 'Push Artifacts'
+    condition: succeeded()
+    env:
+      MAPPED_GH_TOKEN: $(GH_TOKEN)
+
+- job: Windows_MinGW
+  displayName: Windows and MinGW
+
+  strategy:
+    matrix:
+      VS2017:
+        imageName: 'vs2017-win2016'
+        Compiler: vs2017
+
+      VS2019:
+        imageName: 'windows-2019'
+        Compiler: vs2019
+
+      MinGW GCC:
+        imageName: 'vs2017-win2016'
+        Compiler: mingw64
+        CC: gcc
+        CXX: g++
+
+      MinGW Clang:
+        imageName: 'vs2017-win2016'
+        Compiler: mingw64
+        CC: clang
+        CXX: clang++
+
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+  - powershell: |
+      choco install --no-progress msys2 --params="/InstallDir:C:\msys64 /NoUpdate /NoPath"
+      C:\msys64\usr\bin\pacman --noconfirm -Syy
+
+    displayName: 'Install and Update MSYS2 on Windows'
+    condition: eq( variables['Compiler'], 'mingw64' )
+
+  - powershell: |
+      C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-cmake make
+
+      if ($env:CC -eq "gcc") { C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-gcc }
+      else { C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-clang }
+
+      C:\msys64\usr\bin\pacman --noconfirm -Scc
+
+    displayName: 'Install Build Dependencies on MinGW'
+    condition: eq( variables['Compiler'], 'mingw64' )
+
+  - powershell: |
+      $env:GIT_REDIRECT_STDERR = '2>&1'
+      git fetch --unshallow; if (-not $?) { return }
+
+    displayName: 'Unshallow Git Repository for Versioning'
+
+  - powershell: |
+      $env:generator = switch ("$(imageName)")
+      {
+        "windows-2019" {"Visual Studio 16 2019"}
+        "vs2017-win2016" {"Visual Studio 15 2017"}
+      }
+
+      cmake -G "$env:generator" -A x64 -B ../$(package_name)-build-Release
+
+    displayName: 'CMake Configuration on Windows'
+    condition: ne( variables['Compiler'], 'mingw64' )
+
+  - powershell: |
+      $env:PATH = "C:\msys64\usr\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem"
+      $env:MSYSTEM = "MINGW64"
+
+      C:\msys64\usr\bin\bash.exe -lc 'cmake -G \"MSYS Makefiles\" -B ../$(package_name)-build-Release -D CMAKE_BUILD_TYPE=Release'
+
+    displayName: 'CMake Configuration on MinGW'
+    condition: eq( variables['Compiler'], 'mingw64' )
+    env:
+      CHERE_INVOKING: on
+
+  - powershell: |
+      cmake --build ../$(package_name)-build-Release --config Release
+
+    displayName: 'CMake Build on Windows'
+    condition: ne( variables['Compiler'], 'mingw64' )
+
+  - powershell: |
+      $env:PATH = "C:\msys64\x86_64\bin;C:\msys64\usr\bin;$env:PATH"
+      $env:MSYSTEM = "MINGW64"
+      C:\msys64\usr\bin\bash.exe -lc 'make -j2 -C ../$(package_name)-build-Release'
+
+    displayName: 'Make on MinGW'
+    condition: eq( variables['Compiler'], 'mingw64' )
+    env:
+      CHERE_INVOKING: on
+
+  - powershell: |
+      cmake --build ../$(package_name)-build-Release --config Release --target package
+
+    displayName: 'Package on Windows'
+    condition: ne( variables['Compiler'], 'mingw64' )
+
+  - powershell: |
+      $env:PATH = "C:\msys64\usr\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem"
+      $env:MSYSTEM = "MINGW64"
+      $env:CHERE_INVOKING = 1
+
+      C:\msys64\usr\bin\bash.exe -lc 'make package -C ../$(package_name)-build-Release'
+
+    displayName: 'Package on MinGW'
+    condition: eq( variables['Compiler'], 'mingw64' )
+
+  - powershell: |
+      git config --global user.email "pipelines@azure.com"
+      git config --global user.name "Azure Pipelines"
+
+      $env:GIT_REDIRECT_STDERR = '2>&1'
+      $env:vsversion = switch ("$(imageName)")
+      {
+        "windows-2019" {"vs2019"}
+        "vs2017-win2016" {"vs2017"}
+      }
+
+      $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "BRANCHNAME","$(Build.SourceBranchName)"
+      if ($env:Compiler -ne "mingw64")
+        { $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "OS","windows" -replace "COMPILER",$env:vsversion }
+      else
+        { $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "OS","mingw64" -replace "COMPILER",$env:CC }
+
+      cd ..
+      git clone https://$env:MAPPED_GH_TOKEN@github.com/nCine/$(package_name)-artifacts.git 2>&1>$null
+      cd $(package_name)-artifacts
+      git checkout $env:DEPLOY_BRANCH; if (-not $?) { git checkout --orphan $env:DEPLOY_BRANCH }
+      git reset
+      git rm *
+
+      if ($env:Compiler -ne "mingw64")
+      {
+        Move-Item -Path ..\$(package_name)-build-Release\*.zip -Destination .
+        git add *.zip
+      }
+      else
+      {
+        Move-Item -Path ..\$(package_name)-build-Release\*.tar.gz -Destination .
+        git add *.tar.gz
+      }
+
+      git commit --amend -m "$env:DEPLOY_MESSAGE"; if (-not $?) { git commit -m "$env:DEPLOY_MESSAGE" }
+      git push --force; if (-not $?) { git push --set-upstream origin $env:DEPLOY_BRANCH }
+
+    displayName: 'Push Artifacts'
+    condition: succeeded()
+    env:
+      MAPPED_GH_TOKEN: $(GH_TOKEN)

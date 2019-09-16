@@ -15,6 +15,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 )
 
 include(get_version)
+include(installation)
 include(cpptoml)
 target_include_directories(${TARGET_NAME} PRIVATE ${CPPTOML_SOURCE_DIR}/include)
 include(clipp)
