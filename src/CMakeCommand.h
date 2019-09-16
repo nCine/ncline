@@ -30,6 +30,12 @@ class CMakeCommand
 
 	inline const std::string &output() const { return output_; }
 
+	void addAndroidNdkDirToPath();
+	void addNMakeDirToPath();
+	void addAndroidSdkDirToPath();
+	void addGradleDirToPath();
+	void addDoxygenDirToPath();
+
   private:
 	bool found_;
 	std::string executable_;

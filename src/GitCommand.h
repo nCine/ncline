@@ -21,6 +21,8 @@ class GitCommand
 	inline const std::string &executable() const { return executable_; }
 	inline const std::string &output() const { return output_; }
 
+	void addGitDirToPath();
+
   private:
 	bool found_;
 	std::string executable_;

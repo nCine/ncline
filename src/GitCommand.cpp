@@ -40,14 +40,7 @@ GitCommand::GitCommand()
 			executable_ = "git";
 	}
 
-	// Allow CMake ExternalProject to find git if it's not already in the path
-	std::string gitDir = fs::dirName(executable_.data());
-	if (gitDir.empty() == false && gitDir != ".")
-	{
-		gitDir = fs::absolutePath(gitDir.data());
-		Helpers::info("Add Git directory to path: ", gitDir.data());
-		Helpers::addDirToPath(gitDir.data());
-	}
+	addGitDirToPath();
 
 	if (executable_.find(' ') != std::string::npos)
 		executable_ = "\"" + executable_ + "\"";
@@ -183,6 +176,18 @@ bool GitCommand::checkRepositoryVersion(const char *repositoryDir, std::string &
 	}
 
 	return true;
+}
+
+void GitCommand::addGitDirToPath()
+{
+	// Allow CMake ExternalProject to find git if it's not already in the path
+	std::string gitDir = fs::dirName(executable_.data());
+	if (gitDir.empty() == false && gitDir != ".")
+	{
+		gitDir = fs::absolutePath(gitDir.data());
+		Helpers::info("Add Git directory to path: ", gitDir.data());
+		Helpers::addDirToPath(gitDir.data());
+	}
 }
 
 ///////////////////////////////////////////////////////////

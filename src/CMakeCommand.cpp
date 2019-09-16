@@ -9,7 +9,6 @@
 namespace {
 
 const int MaxLength = 1024;
-// TODO: Unify buffers
 char buffer[MaxLength];
 
 #ifdef _WIN32
@@ -21,6 +20,34 @@ const char *vsVersionToGeneratorString(int version)
 		return "Visual Studio 16 2019";
 }
 #endif
+
+bool checkDoxygenPredefinedLocations(std::string &executable)
+{
+	bool isAccessible = false;
+
+#if defined(_WIN32)
+	std::string programsToDoxygen = "doxygen/bin/doxygen.exe";
+
+	if (fs::canAccess(fs::joinPath(Helpers::getEnvironment("ProgramW6432"), programsToDoxygen).data()))
+	{
+		executable = fs::joinPath(Helpers::getEnvironment("ProgramW6432"), programsToDoxygen);
+		isAccessible = true;
+	}
+	else if (fs::canAccess(fs::joinPath(Helpers::getEnvironment("ProgramFiles"), programsToDoxygen).data()))
+	{
+		executable = fs::joinPath(Helpers::getEnvironment("ProgramFiles"), programsToDoxygen);
+		isAccessible = true;
+	}
+#elif defined(__APPLE__)
+	if (fs::canAccess("/Applications/Doxygen.app/Contents/Resources/doxygen"))
+	{
+		executable = "/Applications/Doxygen.app/Contents/Resources/doxygen";
+		isAccessible = true;
+	}
+#endif
+
+	return isAccessible;
+}
 
 }
 
@@ -54,63 +81,6 @@ CMakeCommand::CMakeCommand()
 
 	if (config().emcmakeExecutable(emcmakeExecutable_) == false)
 		emcmakeExecutable_ = "emcmake";
-
-	if (config().platform() == Configuration::Platform::ANDROID)
-	{
-		std::string androidSdkDir;
-		if (config().androidSdkDir(androidSdkDir))
-		{
-			if (fs::isDirectory(androidSdkDir.data()))
-			{
-				Helpers::info("Set the ANDROID_HOME environment variable to: ", androidSdkDir.data());
-				Helpers::setEnvironment("ANDROID_HOME", androidSdkDir.data());
-			}
-			else
-				Helpers::error("The specified Android SDK directory does not exists: ", androidSdkDir.data());
-		}
-
-		std::string androidNdkDir;
-		if (config().androidNdkDir(androidNdkDir))
-		{
-			if (fs::isDirectory(androidNdkDir.data()))
-			{
-				Helpers::info("Set the ANDROID_NDK_HOME environment variable to: ", androidNdkDir.data());
-				Helpers::setEnvironment("ANDROID_NDK_HOME", androidNdkDir.data());
-			}
-			else
-				Helpers::error("The specified Android NDK directory does not exists: ", androidNdkDir.data());
-		}
-
-		// Adding Gradle to the path now, even if it is only needed when building an APK
-		std::string gradleDir;
-		if (config().gradleDir(gradleDir))
-		{
-			gradleDir = fs::joinPath(gradleDir, "bin");
-			if (fs::isDirectory(gradleDir.data()))
-			{
-				Helpers::info("Add Gradle binary directory to path: ", gradleDir.data());
-				Helpers::addDirToPath(gradleDir.data());
-			}
-			else
-				Helpers::error("The specified Gradle binary directory does not exists: ", gradleDir.data());
-		}
-
-#ifdef _WIN32
-		// Adding NMake to the path now, even if it is only needed when building
-		std::string nmakeExecutable = findNMake();
-		if (nmakeExecutable.empty() == false)
-		{
-			std::string nmakeDir = fs::dirName(nmakeExecutable.data());
-			if (nmakeDir.empty() == false)
-			{
-				Helpers::info("Add NMake directory to path: ", nmakeDir.data());
-				Helpers::addDirToPath(nmakeDir.data());
-			}
-		}
-		else
-			Helpers::error("Cannot find NMake executable");
-#endif
-	}
 }
 
 ///////////////////////////////////////////////////////////
@@ -215,6 +185,86 @@ bool CMakeCommand::isUpdated() const
 {
 	assert(found_);
 	return Helpers::checkMinVersion(version_, 3, 13, 0);
+}
+
+void CMakeCommand::addAndroidNdkDirToPath()
+{
+	std::string androidNdkDir;
+	if (config().androidNdkDir(androidNdkDir))
+	{
+		if (fs::isDirectory(androidNdkDir.data()))
+		{
+			Helpers::info("Set the ANDROID_NDK_HOME environment variable to: ", androidNdkDir.data());
+			Helpers::setEnvironment("ANDROID_NDK_HOME", androidNdkDir.data());
+		}
+		else
+			Helpers::error("The specified Android NDK directory does not exists: ", androidNdkDir.data());
+	}
+}
+
+void CMakeCommand::addNMakeDirToPath()
+{
+#ifdef _WIN32
+	std::string nmakeExecutable = findNMake();
+	if (nmakeExecutable.empty() == false)
+	{
+		std::string nmakeDir = fs::dirName(nmakeExecutable.data());
+		if (nmakeDir.empty() == false)
+		{
+			Helpers::info("Add NMake directory to path: ", nmakeDir.data());
+			Helpers::addDirToPath(nmakeDir.data());
+		}
+	}
+	else
+		Helpers::error("Cannot find NMake executable");
+#endif
+}
+
+void CMakeCommand::addAndroidSdkDirToPath()
+{
+	std::string androidSdkDir;
+	if (config().androidSdkDir(androidSdkDir))
+	{
+		if (fs::isDirectory(androidSdkDir.data()))
+		{
+			Helpers::info("Set the ANDROID_HOME environment variable to: ", androidSdkDir.data());
+			Helpers::setEnvironment("ANDROID_HOME", androidSdkDir.data());
+		}
+		else
+			Helpers::error("The specified Android SDK directory does not exists: ", androidSdkDir.data());
+	}
+}
+
+void CMakeCommand::addGradleDirToPath()
+{
+	std::string gradleDir;
+	if (config().gradleDir(gradleDir))
+	{
+		gradleDir = fs::joinPath(gradleDir, "bin");
+		if (fs::isDirectory(gradleDir.data()))
+		{
+			Helpers::info("Add Gradle binary directory to path: ", gradleDir.data());
+			Helpers::addDirToPath(gradleDir.data());
+		}
+		else
+			Helpers::error("The specified Gradle binary directory does not exists: ", gradleDir.data());
+	}
+}
+
+void CMakeCommand::addDoxygenDirToPath()
+{
+	// Allow CMake to find doxygen if it's not already in the path
+	std::string doxygenDir;
+	if (config().doxygenExecutable(doxygenDir) == false)
+		checkDoxygenPredefinedLocations(doxygenDir);
+
+	doxygenDir = fs::dirName(doxygenDir.data());
+	if (doxygenDir.empty() == false && doxygenDir != ".")
+	{
+		doxygenDir = fs::absolutePath(doxygenDir.data());
+		Helpers::info("Add Doxygen directory to path: ", doxygenDir.data());
+		Helpers::addDirToPath(doxygenDir.data());
+	}
 }
 
 ///////////////////////////////////////////////////////////

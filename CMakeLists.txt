@@ -51,6 +51,8 @@ target_sources(${TARGET_NAME} PRIVATE
 	src/ConfMode.cpp
 	src/BuildMode.h
 	src/BuildMode.cpp
+	src/DistMode.h
+	src/DistMode.cpp
 	src/Helpers.h
 	src/Helpers.cpp
 )

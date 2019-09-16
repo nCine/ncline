@@ -49,6 +49,8 @@ void buildLibraries(CMakeCommand &cmake, const Settings &settings)
 
 void buildAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 {
+	cmake.addNMakeDirToPath();
+
 	Helpers::info("Build the Android libraries");
 
 	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
@@ -59,6 +61,9 @@ void buildAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 
 void buildEngine(CMakeCommand &cmake, const Settings &settings)
 {
+	if (config().platform() == Configuration::Platform::ANDROID)
+		cmake.addNMakeDirToPath();
+
 	Helpers::info("Build the engine");
 
 	std::string buildDir = Helpers::nCineSourceDir();
@@ -85,6 +90,14 @@ void buildEngine(CMakeCommand &cmake, const Settings &settings)
 
 void buildGame(CMakeCommand &cmake, const Settings &settings, const std::string &gameName)
 {
+	if (config().platform() == Configuration::Platform::ANDROID)
+	{
+		cmake.addNMakeDirToPath();
+		// Needed by Gradle to strip libraries
+		cmake.addAndroidNdkDirToPath();
+		cmake.addAndroidSdkDirToPath();
+	}
+
 	Helpers::info("Build the game: ", gameName.data());
 
 	std::string buildDir = gameName;

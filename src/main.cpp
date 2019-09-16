@@ -8,6 +8,7 @@
 #include "DownloadMode.h"
 #include "ConfMode.h"
 #include "BuildMode.h"
+#include "DistMode.h"
 
 int main(int argc, char **argv)
 {
@@ -66,6 +67,7 @@ int main(int argc, char **argv)
 				case Settings::Mode::DOWNLOAD: DownloadMode::perform(git, cmake, settings); break;
 				case Settings::Mode::CONF: ConfMode::perform(cmake, settings); break;
 				case Settings::Mode::BUILD: BuildMode::perform(cmake, settings); break;
+				case Settings::Mode::DIST: DistMode::perform(cmake, settings); break;
 				default: break;
 			}
 		}

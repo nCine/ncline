@@ -137,6 +137,8 @@ bool ncineDirArg(std::string &cmakeArguments)
 
 void configureAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 {
+	cmake.addAndroidNdkDirToPath();
+
 	Helpers::info("Configure the Android libraries");
 
 	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
@@ -169,6 +171,9 @@ void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 
 void configureEngine(CMakeCommand &cmake, const Settings &settings)
 {
+	if (config().platform() == Configuration::Platform::ANDROID)
+		cmake.addAndroidNdkDirToPath();
+
 	Helpers::info("Configure the engine");
 
 	std::string buildDir = Helpers::nCineSourceDir();
@@ -186,6 +191,12 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 
 void configureGame(CMakeCommand &cmake, const Settings &settings, const std::string &gameName)
 {
+	if (config().platform() == Configuration::Platform::ANDROID)
+	{
+		cmake.addAndroidNdkDirToPath();
+		cmake.addGradleDirToPath();
+	}
+
 	Helpers::info("Configure the game: ", gameName.data());
 
 	std::string buildDir = gameName;

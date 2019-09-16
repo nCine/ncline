@@ -50,6 +50,8 @@ class Configuration
 	void setNinjaExecutable(const std::string &value);
 	bool emcmakeExecutable(std::string &value) const;
 	void setEmcmakeExecutable(const std::string &value);
+	bool doxygenExecutable(std::string &value) const;
+	void setDoxygenExecutable(const std::string &value);
 
 	Platform platform() const;
 	void setPlatform(Platform platform);

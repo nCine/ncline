@@ -17,6 +17,7 @@ namespace Executables {
 	const char *cmake = "cmake";
 	const char *ninja = "ninja";
 	const char *emcmake = "emcmake";
+	const char *doxygen = "doxygen";
 }
 
 namespace CMake {
@@ -136,6 +137,16 @@ bool Configuration::emcmakeExecutable(std::string &value) const
 void Configuration::setEmcmakeExecutable(const std::string &value)
 {
 	executablesSection_->insert(Names::Executables::emcmake, value);
+}
+
+bool Configuration::doxygenExecutable(std::string &value) const
+{
+	return retrieveString(executablesSection_, Names::Executables::doxygen, value);
+}
+
+void Configuration::setDoxygenExecutable(const std::string &value)
+{
+	executablesSection_->insert(Names::Executables::doxygen, value);
 }
 
 Configuration::Platform Configuration::platform() const

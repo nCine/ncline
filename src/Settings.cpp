@@ -61,6 +61,7 @@ bool Settings::parseArguments(int argc, char **argv)
 	                (option("-cmake-exe") & value("executable").call([&](const std::string &cmakeExe) { config().setCMakeExecutable(cmakeExe); })).doc("set the CMake command executable"),
 	                (option("-ninja-exe") & value("executable").call([&](const std::string &ninjaExe) { config().setNinjaExecutable(ninjaExe); })).doc("set the Ninja command executable"),
 	                (option("-emcmake-exe") & value("executable").call([&](const std::string &emcmakeExe) { config().setEmcmakeExecutable(emcmakeExe); })).doc("set the Emscripten emcmake command executable"),
+	                (option("-doxygen-exe") & value("executable").call([&](const std::string &doxygenExe) { config().setDoxygenExecutable(doxygenExe); })).doc("set the Doxygen command executable"),
 	                (option("-prefix-path") & value("path").call([&](const std::string &directory) { config().setCMakePrefixPath(directory); })).doc("set the CMAKE_PREFIX_PATH variable for the engine"),
 	                (option("-cmake-args") & value("args").call([&](const std::string &cmakeArgs) { config().setEngineCMakeArguments(cmakeArgs); })).doc("additional CMake arguments to configure the engine"),
 	                (option("-branch") & value("name").call([&](const std::string &branchName) { config().setBranchName(branchName); })).doc("branch name for engine and projects"),
@@ -84,6 +85,10 @@ bool Settings::parseArguments(int argc, char **argv)
 	                  command("engine").set(target_, Target::ENGINE) |
 	                  command("game").set(target_, Target::GAME)).doc("choose what to build"));
 
+	auto distMode = (command("dist").set(mode_, Mode::DIST).doc("distribution mode"),
+	                 (command("engine").set(target_, Target::ENGINE) |
+	                 command("game").set(target_, Target::GAME)).doc("choose what to distribute"));
+
 	if (CMakeCommand::generatorIsMultiConfig() == false)
 		confMode.push_back((command("debug").set(buildType_, BuildType::DEBUG) | command("release").set(buildType_, BuildType::RELEASE)).doc("choose debug or release build type"));
 	else
@@ -98,8 +103,9 @@ bool Settings::parseArguments(int argc, char **argv)
 	downloadMode.push_back(dryRunOption);
 	confMode.push_back(dryRunOption);
 	buildMode.push_back(dryRunOption);
+	distMode.push_back(dryRunOption);
 
-	auto cli = ((setMode | downloadMode | confMode | buildMode |
+	auto cli = ((setMode | downloadMode | confMode | buildMode | distMode |
 	             command("--help").set(mode_, Mode::HELP).doc("show help") |
 	             command("--version").set(mode_, Mode::VERSION).doc("show version")));
 	// clang-format on

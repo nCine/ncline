@@ -159,6 +159,17 @@ void Helpers::buildDir(std::string &binaryDir, const Settings &settings)
 	}
 }
 
+void Helpers::distDir(std::string &binaryDir, const Settings &settings)
+{
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
+		binaryDir += "-web";
+
+	if (settings.target() == Settings::Target::ENGINE)
+		binaryDir += "-release-DevDist";
+	else if (settings.target() == Settings::Target::GAME)
+		binaryDir += "-release-BinDist";
+}
+
 std::string Helpers::gameRepositoryUrl(const std::string &gameName)
 {
 	assert(gameName.empty() == false);
