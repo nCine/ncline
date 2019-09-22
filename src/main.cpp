@@ -25,6 +25,18 @@ int main(int argc, char **argv)
 	{
 #ifdef _WIN32
 		Process::setupJobObject();
+
+		if (config().withColors())
+		{
+			const bool hasVTProcessing = Helpers::enableVirtualTerminalProcessing();
+			// mintty supports color sequences but not the Windows console API calls
+			const char *termName = Helpers::getEnvironment("TERM");
+			if (hasVTProcessing == false && termName == nullptr)
+			{
+				config().setWithColors(false);
+				Helpers::info("This console does not support virtual terminal processing, colors have been disabled");
+			}
+		}
 #endif
 
 		GitCommand git;

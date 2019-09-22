@@ -56,7 +56,7 @@ bool Settings::parseArguments(int argc, char **argv)
 	                (
 	                    option("-colors").call([] { config().setWithColors(true); }) |
 	                    option("-no-colors").call([] { config().setWithColors(false); })
-	                ).doc("(do not) use shell colors in the output"),
+	                ).doc("(do not) use colors in the terminal output"),
 	                (option("-git-exe") & value("executable").call([&](const std::string &gitExe) { config().setGitExecutable(gitExe); })).doc("set the Git command executable"),
 	                (option("-cmake-exe") & value("executable").call([&](const std::string &cmakeExe) { config().setCMakeExecutable(cmakeExe); })).doc("set the CMake command executable"),
 	                (option("-ninja-exe") & value("executable").call([&](const std::string &ninjaExe) { config().setNinjaExecutable(ninjaExe); })).doc("set the Ninja command executable"),

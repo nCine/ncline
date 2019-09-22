@@ -21,6 +21,7 @@ In order to change a setting you have to invoke the tool with the `set` command 
 	ncline set -game ncPong
 
 If you want to enable or disable the colored terminal output you can use `-colors` or `-no-colors`.
+If left unspecified the default mode would be `-colors`.
 
 #### nCine section
 

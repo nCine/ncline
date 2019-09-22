@@ -85,13 +85,7 @@ Configuration::Configuration()
 
 bool Configuration::withColors() const
 {
-#if defined(_WIN32) || defined(__APPLE__)
-	const bool defaultValue = false;
-#else
-	const bool defaultValue = true;
-#endif
-
-	return root_->get_as<bool>(Names::withColors).value_or(defaultValue);
+	return root_->get_as<bool>(Names::withColors).value_or(true);
 }
 
 void Configuration::setWithColors(bool value)

@@ -15,6 +15,9 @@ class Helpers
 	static bool checkMinVersion(unsigned int major, unsigned int minor, unsigned int patch, unsigned int minMajor, unsigned int minMinor, unsigned int minPatch);
 	static bool checkMinVersion(const unsigned int version[], unsigned int minMajor, unsigned int minMinor, unsigned int minPatch);
 
+#ifdef _WIN32
+	static bool enableVirtualTerminalProcessing();
+#endif
 	static void echo(const char *msg);
 	static void info(const char *msg);
 	static void info(const char *msg1, const char *msg2);
