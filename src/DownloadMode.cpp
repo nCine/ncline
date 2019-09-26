@@ -36,6 +36,14 @@ void appendCompilerString(std::string &branchName)
 	}
 }
 
+void appendVsString(std::string &branchName)
+{
+	if (config().vsVersion() == 2017)
+		branchName += "-vs2017";
+	else
+		branchName += "-vs2019";
+}
+
 void appendAndroidArchString(std::string &branchName)
 {
 	switch (config().androidArch())
@@ -55,41 +63,36 @@ void appendAndroidArchString(std::string &branchName)
 
 const char *librariesArtifactsBranch()
 {
+	static std::string branchName;
 	if (config().platform() == Configuration::Platform::ANDROID)
 	{
-		switch (config().androidArch())
-		{
-			case Configuration::AndroidArch::ARMEABI_V7A:
-				return "android-libraries-armeabi-v7a";
-			case Configuration::AndroidArch::ARM64_V8A:
-			case Configuration::AndroidArch::UNSPECIFIED:
-				return "android-libraries-arm64-v8a";
-			case Configuration::AndroidArch::X86_64:
-				return "android-libraries-x86_64";
-		}
+		branchName = "android-libraries";
+		appendAndroidArchString(branchName);
 	}
-
-	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
-		return "libraries-emscripten-emcc";
-
-#if defined(__APPLE__)
-	return "libraries-darwin-appleclang";
-#elif defined(_WIN32)
-	if (config().vsVersion() == 2019)
-		return "libraries-windows-vs2019";
-	else if (config().vsVersion() == 2017)
-		return "libraries-windows-vs2019";
-#else
-	switch (config().compiler())
+	else if (config().platform() == Configuration::Platform::EMSCRIPTEN)
+		branchName = "libraries-emscripten-emcc";
+	else
 	{
-		case Configuration::Compiler::GCC:
-		case Configuration::Compiler::UNSPECIFIED:
-			return "libraries-linux-gcc";
-		case Configuration::Compiler::CLANG:
-			return "libraries-linux-clang";
-	}
+#if defined(__APPLE__)
+		branchName = "libraries-darwin-appleclang";
+#elif defined(_WIN32)
+		if (config().withMinGW())
+		{
+			branchName = "libraries-mingw64";
+			appendCompilerString(branchName);
+		}
+		else
+		{
+			branchName = "libraries-windows";
+			appendVsString(branchName);
+		}
+#else
+		branchName = "libraries-linux";
+		appendCompilerString(branchName);
 #endif
-	return nullptr;
+	}
+
+	return branchName.data();
 }
 
 const char *artifactsBranch(const char *project)
@@ -125,10 +128,7 @@ const char *artifactsBranch(const char *project)
 		else
 		{
 			branchName += "-windows";
-			if (config().vsVersion() == 2019)
-				branchName += "-vs2019";
-			else if (config().vsVersion() == 2017)
-				branchName += "-vs2017";
+			appendVsString(branchName);
 		}
 #else
 		branchName += "-linux";
@@ -167,13 +167,6 @@ bool extractArchiveAndDeleteDir(CMakeCommand &cmake, const char *archiveFile, co
 
 void downloadLibrariesArtifact(GitCommand &git, CMakeCommand &cmake)
 {
-	if (config().withMinGW())
-	{
-		Helpers::error("MinGW libraries artifacts do not exist");
-		Helpers::info("Use pacman to download and install the required dependencies");
-		return;
-	}
-
 	git.clone(Helpers::nCineLibrariesArtifactsRepositoryUrl(), librariesArtifactsBranch(), 1, true);
 	git.checkout(Helpers::nCineLibrariesArtifactsSourceDir(), librariesArtifactsBranch(), nullptr);
 
@@ -184,9 +177,13 @@ void downloadLibrariesArtifact(GitCommand &git, CMakeCommand &cmake)
 
 	const bool hasExtracted = extractArchiveAndDeleteDir(cmake, archiveFile.data(), Helpers::nCineLibrariesArtifactsSourceDir());
 
-#if !defined(_WIN32) && !defined(__APPLE__)
+#if !defined(__APPLE__)
 	if (config().platform() == Configuration::Platform::DESKTOP &&
-	    hasExtracted && config().hasCMakePrefixPath() == false)
+	    hasExtracted && config().hasCMakePrefixPath() == false
+	#if defined(_WIN32)
+	    && config().withMinGW()
+	#endif
+	)
 	{
 		std::string absolutePath = fs::currentDir();
 		absolutePath = fs::joinPath(absolutePath, Helpers::nCineExternalDir());
