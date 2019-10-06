@@ -1,6 +1,7 @@
 #include <cassert>
 #include "ConfMode.h"
 #include "CMakeCommand.h"
+#include "FileSystem.h"
 #include "Settings.h"
 #include "Configuration.h"
 #include "Helpers.h"
@@ -135,6 +136,20 @@ bool ncineDirArg(std::string &cmakeArguments)
 	return argumentsAdded;
 }
 
+bool cleanBuildDir(CMakeCommand &cmake, const Settings &settings, const std::string &buildDir)
+{
+	if (settings.clean() && fs::isDirectory(buildDir.data()))
+	{
+		Helpers::info("Remove the build directory: ", buildDir.data());
+		std::string cleanCommand = "remove_directory " + buildDir;
+		bool executed = cmake.toolsMode(cleanCommand.data());
+
+		return executed;
+	}
+
+	return false;
+}
+
 void configureAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 {
 	cmake.addAndroidNdkDirToPath();
@@ -143,6 +158,7 @@ void configureAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 
 	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
 	Helpers::buildDir(buildDir, settings);
+	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
 	androidArchArg(arguments);
@@ -161,6 +177,7 @@ void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 
 	std::string buildDir = Helpers::nCineLibrariesSourceDir();
 	Helpers::buildDir(buildDir, settings);
+	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
 	preferredCompilerArgs(arguments);
@@ -178,6 +195,7 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 
 	std::string buildDir = Helpers::nCineSourceDir();
 	Helpers::buildDir(buildDir, settings);
+	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
 	preferredCompilerArgs(arguments);
@@ -201,6 +219,7 @@ void configureGame(CMakeCommand &cmake, const Settings &settings, const std::str
 
 	std::string buildDir = gameName;
 	Helpers::buildDir(buildDir, settings);
+	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
 	preferredCompilerArgs(arguments);

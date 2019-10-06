@@ -99,6 +99,10 @@ bool Settings::parseArguments(int argc, char **argv)
 		buildMode.push_back((command("debug").set(buildType_, BuildType::DEBUG) | command("release").set(buildType_, BuildType::RELEASE)).doc("choose debug or release build configuration"));
 	}
 
+	auto cleanOption = option("-clean").set(clean_, true).doc("remove an existing build directory before recreating it");
+	confMode.push_back(cleanOption);
+	distMode.push_back(cleanOption);
+
 	auto dryRunOption = option("-dry-run").set(Process::dryRun, true).doc("show which commands to execute without executing them");
 	downloadMode.push_back(dryRunOption);
 	confMode.push_back(dryRunOption);

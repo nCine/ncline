@@ -35,10 +35,12 @@ class Settings
 	inline Target target() const { return target_; }
 	inline BuildType buildType() const { return buildType_; }
 	inline bool downloadArtifact() const { return downloadArtifact_; }
+	inline bool clean() const { return clean_; }
 
   private:
 	Mode mode_ = Mode::HELP;
 	Target target_ = Target::LIBS;
 	BuildType buildType_ = BuildType::RELEASE;
 	bool downloadArtifact_ = false;
+	bool clean_ = false;
 };

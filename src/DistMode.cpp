@@ -1,6 +1,7 @@
 #include <cassert>
 #include "DistMode.h"
 #include "CMakeCommand.h"
+#include "FileSystem.h"
 #include "Settings.h"
 #include "Configuration.h"
 #include "Helpers.h"
@@ -45,6 +46,20 @@ void buildReleaseAndPackage(CMakeCommand &cmake, const char *buildDir)
 	}
 }
 
+bool cleanDistDir(CMakeCommand &cmake, const Settings &settings, const std::string &buildDir)
+{
+	if (settings.clean() && fs::isDirectory(buildDir.data()))
+	{
+		Helpers::info("Remove the build directory: ", buildDir.data());
+		std::string cleanCommand = "remove_directory " + buildDir;
+		bool executed = cmake.toolsMode(cleanCommand.data());
+
+		return executed;
+	}
+
+	return false;
+}
+
 void distributeEngine(CMakeCommand &cmake, const Settings &settings)
 {
 	cmake.addAndroidNdkDirToPath();
@@ -54,6 +69,7 @@ void distributeEngine(CMakeCommand &cmake, const Settings &settings)
 
 	std::string buildDir = Helpers::nCineSourceDir();
 	Helpers::distDir(buildDir, settings);
+	cleanDistDir(cmake, settings, buildDir);
 
 	std::string arguments;
 	devDistEngineArg(arguments);
@@ -68,6 +84,7 @@ void distributeGame(CMakeCommand &cmake, const Settings &settings, const std::st
 
 	std::string buildDir = gameName;
 	Helpers::distDir(buildDir, settings);
+	cleanDistDir(cmake, settings, buildDir);
 
 	std::string arguments;
 	devDistGameArg(arguments);
