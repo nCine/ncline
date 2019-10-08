@@ -6,6 +6,10 @@
 #include "Configuration.h"
 
 #ifdef _WIN32
+	#include "Process.h"
+#endif
+
+#ifdef _WIN32
 	#define _AMD64_
 	#include <windef.h>
 	#include <WinBase.h>
@@ -106,6 +110,18 @@ bool Helpers::enableVirtualTerminalProcessing()
 	return true;
 }
 #endif
+
+const char *Helpers::redirectErrorsToNull()
+{
+#ifdef _WIN32
+	if (Process::powerShell)
+		return "2> $null";
+	else
+		return "2> NUL";
+#else
+	return "2> /dev/null";
+#endif
+}
 
 void Helpers::echo(const char *msg)
 {

@@ -15,9 +15,11 @@ class Process
 
 #ifdef _WIN32
 	static void setupJobObject();
+	static void detectPowerShell();
 #endif
 
 	static bool dryRun;
+	static bool powerShell;
 
 	static bool executeCommand(const char *command);
 	static bool executeCommand(const char *command, Echo echoMode);

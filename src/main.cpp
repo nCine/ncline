@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 	{
 #ifdef _WIN32
 		Process::setupJobObject();
+		Process::detectPowerShell();
 
 		if (config().withColors())
 		{

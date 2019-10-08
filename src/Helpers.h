@@ -18,6 +18,8 @@ class Helpers
 #ifdef _WIN32
 	static bool enableVirtualTerminalProcessing();
 #endif
+	static const char *redirectErrorsToNull();
+
 	static void echo(const char *msg);
 	static void info(const char *msg);
 	static void info(const char *msg1, const char *msg2);

@@ -58,6 +58,9 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 ///////////////////////////////////////////////////////////
 
 bool Process::dryRun = false;
+#ifdef _WIN32
+bool Process::powerShell = false;
+#endif
 
 ///////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS
@@ -72,6 +75,17 @@ void Process::setupJobObject()
 
 	const BOOL successHandler = SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 	assert(successHandler);
+}
+
+void Process::detectPowerShell()
+{
+	const char *hostName = Helpers::getEnvironment("host.name");
+	if (hostName)
+	{
+		std::string psHostName = "ConsoleHost";
+		if (psHostName == hostName)
+			powerShell = true;
+	}
 }
 #endif
 

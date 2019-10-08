@@ -148,7 +148,7 @@ bool GitCommand::checkRepositoryVersion(const char *repositoryDir, std::string &
 		assert(executed);
 		strncpyWrapper(branchName, MaxLength, output_.data(), MaxLength - 1);
 
-		snprintf(buffer, MaxLength, "%s --git-dir=%s describe --tags --exact-match HEAD", executable_.data(), repositoryGitDir.data());
+		snprintf(buffer, MaxLength, "%s --git-dir=%s describe --tags --exact-match HEAD %s", executable_.data(), repositoryGitDir.data(), Helpers::redirectErrorsToNull());
 		hasTag = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
 
 		if (hasTag)
