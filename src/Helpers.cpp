@@ -180,19 +180,12 @@ void Helpers::error(const char *msg1, const char *msg2)
 	std::cout << msg2 << "\n";
 }
 
-void Helpers::buildDir(std::string &binaryDir, const Settings &settings)
+void Helpers::buildDir(std::string &binaryDir)
 {
 	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
-		binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-web-debug" : "-web-release";
-	else
-	{
-		// nCine-android-libraries have a suffix based on the build type also on Windows
-		if (CMakeCommand::generatorIsMultiConfig() &&
-		    (config().platform() != Configuration::Platform::ANDROID || settings.target() != Settings::Target::LIBS))
-			binaryDir += "-build";
-		else
-			binaryDir += (settings.buildType() == Settings::BuildType::DEBUG) ? "-debug" : "-release";
-	}
+		binaryDir += "-web";
+
+	binaryDir += "-build";
 }
 
 void Helpers::distDir(std::string &binaryDir, const Settings &settings)
@@ -201,9 +194,9 @@ void Helpers::distDir(std::string &binaryDir, const Settings &settings)
 		binaryDir += "-web";
 
 	if (settings.target() == Settings::Target::ENGINE)
-		binaryDir += "-release-DevDist";
+		binaryDir += "-DevDist";
 	else if (settings.target() == Settings::Target::GAME)
-		binaryDir += "-release-BinDist";
+		binaryDir += "-BinDist";
 }
 
 std::string Helpers::gameRepositoryUrl(const std::string &gameName)

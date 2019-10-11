@@ -46,7 +46,7 @@ GitCommand::GitCommand()
 		executable_ = "\"" + executable_ + "\"";
 
 	snprintf(buffer, MaxLength, "%s --version", executable_.data());
-	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED);
+	const bool executed = Process::executeCommand(buffer, output_, Process::Echo::DISABLED, Process::OverrideDryRun::ENABLED);
 	if (executed)
 		found_ = sscanf(output_.data(), "git version %u.%u.%u", &version_[0], &version_[1], &version_[2]);
 }

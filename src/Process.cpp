@@ -91,36 +91,41 @@ void Process::detectPowerShell()
 
 bool Process::executeCommand(const char *command)
 {
-	return executeCommand(command, nullptr, Echo::ENABLED);
+	return executeCommand(command, nullptr, Echo::ENABLED, OverrideDryRun::DISABLED);
 }
 
 bool Process::executeCommand(const char *command, Echo echoMode)
 {
-	return executeCommand(command, nullptr, echoMode);
+	return executeCommand(command, nullptr, echoMode, OverrideDryRun::DISABLED);
 }
 
 bool Process::executeCommand(const char *command, std::string &output)
 {
-	return executeCommand(command, &output, Echo::ENABLED);
+	return executeCommand(command, &output, Echo::ENABLED, OverrideDryRun::DISABLED);
 }
 
 bool Process::executeCommand(const char *command, std::string &output, Echo echoMode)
 {
-	return executeCommand(command, &output, echoMode);
+	return executeCommand(command, &output, echoMode, OverrideDryRun::DISABLED);
+}
+
+bool Process::executeCommand(const char *command, std::string &output, Echo echoMode, OverrideDryRun overrideMode)
+{
+	return executeCommand(command, &output, echoMode, overrideMode);
 }
 
 ///////////////////////////////////////////////////////////
 // PRIVATE FUNCTIONS
 ///////////////////////////////////////////////////////////
 
-bool Process::executeCommand(const char *command, std::string *output, Echo echoMode)
+bool Process::executeCommand(const char *command, std::string *output, Echo echoMode, OverrideDryRun overrideMode)
 {
 	assert(command);
 
 	if (echoMode != Echo::DISABLED)
 		Helpers::echo(command);
 
-	if (dryRun)
+	if (dryRun && overrideMode == OverrideDryRun::DISABLED)
 		return true;
 
 	FILE *fp = popenWrapper(command, "r");

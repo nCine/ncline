@@ -23,7 +23,7 @@ void buildLibraries(CMakeCommand &cmake, const Settings &settings)
 	Helpers::info("Build the libraries");
 
 	std::string buildDir = Helpers::nCineLibrariesSourceDir();
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 
 	bool hasBuilt = false;
 	if (CMakeCommand::generatorIsMultiConfig())
@@ -54,7 +54,7 @@ void buildAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 	Helpers::info("Build the Android libraries");
 
 	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 
 	cmake.build(buildDir.data());
 }
@@ -67,7 +67,7 @@ void buildEngine(CMakeCommand &cmake, const Settings &settings)
 	Helpers::info("Build the engine");
 
 	std::string buildDir = Helpers::nCineSourceDir();
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 
 	bool hasBuilt = false;
 	if (CMakeCommand::generatorIsMultiConfig())
@@ -101,7 +101,7 @@ void buildGame(CMakeCommand &cmake, const Settings &settings, const std::string 
 	Helpers::info("Build the game: ", gameName.data());
 
 	std::string buildDir = gameName;
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 
 	if (CMakeCommand::generatorIsMultiConfig())
 		cmake.buildConfig(buildDir.data(), settingsToBuildConfigString(settings.buildType()));

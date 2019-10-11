@@ -157,7 +157,7 @@ void configureAndroidLibraries(CMakeCommand &cmake, const Settings &settings)
 	Helpers::info("Configure the Android libraries");
 
 	std::string buildDir = Helpers::nCineAndroidLibrariesSourceDir();
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
@@ -176,7 +176,7 @@ void configureLibraries(CMakeCommand &cmake, const Settings &settings)
 	Helpers::info("Configure the libraries");
 
 	std::string buildDir = Helpers::nCineLibrariesSourceDir();
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
@@ -194,7 +194,7 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 	Helpers::info("Configure the engine");
 
 	std::string buildDir = Helpers::nCineSourceDir();
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;
@@ -218,7 +218,7 @@ void configureGame(CMakeCommand &cmake, const Settings &settings, const std::str
 	Helpers::info("Configure the game: ", gameName.data());
 
 	std::string buildDir = gameName;
-	Helpers::buildDir(buildDir, settings);
+	Helpers::buildDir(buildDir);
 	cleanBuildDir(cmake, settings, buildDir);
 
 	std::string arguments;

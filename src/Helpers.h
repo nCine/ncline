@@ -26,7 +26,7 @@ class Helpers
 	static void error(const char *msg);
 	static void error(const char *msg1, const char *msg2);
 
-	static void buildDir(std::string &binaryDir, const Settings &settings);
+	static void buildDir(std::string &binaryDir);
 	static void distDir(std::string &binaryDir, const Settings &settings);
 
 	static const char *nCineLibrariesRepositoryUrl() { return "https://github.com/nCine/nCine-libraries.git"; }

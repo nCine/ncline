@@ -13,6 +13,12 @@ class Process
 		ENABLED
 	};
 
+	enum class OverrideDryRun
+	{
+		DISABLED,
+		ENABLED
+	};
+
 #ifdef _WIN32
 	static void setupJobObject();
 	static void detectPowerShell();
@@ -25,7 +31,8 @@ class Process
 	static bool executeCommand(const char *command, Echo echoMode);
 	static bool executeCommand(const char *command, std::string &output);
 	static bool executeCommand(const char *command, std::string &output, Echo echoMode);
+	static bool executeCommand(const char *command, std::string &output, Echo echoMode, OverrideDryRun overrideMode);
 
   private:
-	static bool executeCommand(const char *command, std::string *output, Echo echoMode);
+	static bool executeCommand(const char *command, std::string *output, Echo echoMode, OverrideDryRun overrideMode);
 };

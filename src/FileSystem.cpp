@@ -102,7 +102,8 @@ bool FileSystem::isDirectory(const char *file)
 	struct stat sb;
 	if (lstat(file, &sb) == -1)
 	{
-		perror("lstat");
+		snprintf(buffer, MaxLength, "lstat error on %s", file);
+		perror(buffer);
 		return false;
 	}
 	else
