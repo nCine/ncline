@@ -206,14 +206,10 @@ void downloadLibraries(GitCommand &git)
 		git.clone(Helpers::nCineLibrariesRepositoryUrl());
 }
 
-void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
+bool extractEngineArchive(GitCommand &git, CMakeCommand& cmake, std::string &archiveFile)
 {
-	git.clone(Helpers::nCineArtifactsRepositoryUrl(), artifactsBranch("nCine"), 1, true);
-	git.checkout(Helpers::nCineArtifactsSourceDir(), artifactsBranch("nCine"), nullptr);
+	assert(config().platform() != Configuration::Platform::EMSCRIPTEN);
 
-	git.customCommand(Helpers::nCineArtifactsSourceDir(), "ls-tree -r --name-only HEAD");
-
-	std::string archiveFile = git.output();
 #ifdef _WIN32
 	if (config().withMinGW() == false)
 	{
@@ -272,6 +268,27 @@ void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
 	const bool hasExtracted = executed;
 #endif
 
+	return hasExtracted;
+}
+
+void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
+{
+	git.clone(Helpers::nCineArtifactsRepositoryUrl(), artifactsBranch("nCine"), 1, true);
+	git.checkout(Helpers::nCineArtifactsSourceDir(), artifactsBranch("nCine"), nullptr);
+
+	git.customCommand(Helpers::nCineArtifactsSourceDir(), "ls-tree -r --name-only HEAD");
+
+	std::string archiveFile = git.output();
+
+	bool hasExtracted = false;
+	if (config().platform() == Configuration::Platform::EMSCRIPTEN)
+	{
+		archiveFile.erase(std::remove(archiveFile.begin(), archiveFile.end(), '\n'), archiveFile.end());
+		hasExtracted = extractArchiveAndDeleteDir(cmake, archiveFile.data(), Helpers::nCineArtifactsSourceDir());
+	}
+	else
+		hasExtracted = extractEngineArchive(git, cmake, archiveFile);
+
 	if (hasExtracted && config().hasEngineDir() == false)
 	{
 		std::string absolutePath = fs::currentDir();
@@ -293,7 +310,7 @@ void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
 			else
 				absolutePath = fs::joinPath(absolutePath, "lib/cmake/nCine");
 		}
-#elif __APPLE__
+#elif defined(__APPLE__)
 		absolutePath = fs::joinPath(absolutePath, "nCine.app");
 		absolutePath = fs::joinPath(absolutePath, "Contents/Resources/cmake");
 #else
