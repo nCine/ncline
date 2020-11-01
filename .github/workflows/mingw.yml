@@ -1,0 +1,106 @@
+name: 'MinGW'
+
+env:
+  DEPLOY_MESSAGE:
+    "Push artifact from GitHub Actions build ${{ github.run_number }} with id ${{ github.run_id }}
+
+     - ncline artifact from branch 'BRANCH_NAME' with commit id ${{ github.sha }}"
+  DEPLOY_BRANCH: ncline-BRANCH_NAME-OS-COMPILER
+
+on: [push, workflow_dispatch]
+
+jobs:
+  MinGW:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - CC: gcc
+          CXX: g++
+
+        - CC: clang
+          CXX: clang++
+
+    runs-on: 'windows-2019'
+
+    steps:
+    - name: 'Checkout Code'
+      uses: actions/checkout@v2
+
+    - name: 'Install and Update MSYS2'
+      run: |
+        choco install --no-progress msys2 --params="/InstallDir:C:\msys64 /NoUpdate /NoPath"
+        C:\msys64\usr\bin\pacman --noconfirm -Syy
+
+    - name: 'Install Build Dependencies'
+      run: |
+        C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-cmake make
+
+        if ("${{ matrix.CC }}" -eq "gcc") { C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-gcc }
+        else { C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-clang }
+
+        C:\msys64\usr\bin\pacman --noconfirm -Scc
+
+    - name: 'Unshallow Git Repository for Versioning'
+      run: |
+        $env:GIT_REDIRECT_STDERR = '2>&1'
+        git fetch --unshallow; if (-not $?) { return }
+
+    - name: 'CMake Configuration'
+      env:
+        CHERE_INVOKING: on
+      run: |
+        $env:CC = "${{ matrix.CC }}"
+        $env:CXX = "${{ matrix.CXX }}"
+
+        $env:PATH = "C:\msys64\usr\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem"
+        $env:MSYSTEM = "MINGW64"
+
+        C:\msys64\usr\bin\bash.exe -lc 'cmake -G \"MSYS Makefiles\" -B ../ncline-build-Release -D CMAKE_BUILD_TYPE=Release'
+
+    - name: 'Make'
+      env:
+        CHERE_INVOKING: on
+      run: |
+       $env:PATH = "C:\msys64\x86_64\bin;C:\msys64\usr\bin;$env:PATH"
+       $env:MSYSTEM = "MINGW64"
+       C:\msys64\usr\bin\bash.exe -lc 'make -j2 -C ../ncline-build-Release'
+
+    - name: 'Package'
+      env:
+        CHERE_INVOKING: on
+      run: |
+        $env:PATH = "C:\msys64\usr\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem"
+        $env:MSYSTEM = "MINGW64"
+
+        C:\msys64\usr\bin\bash.exe -lc 'make package -C ../ncline-build-Release'
+
+    - name: 'Push Artifacts'
+      env:
+        PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+        $env:GIT_REDIRECT_STDERR = '2>&1'
+
+        $env:CC = "${{ matrix.CC }}"
+
+        $env:branch_name = git describe --tags --exact-match; if (-not $?) { $env:branch_name = git symbolic-ref -q --short HEAD }; if (-not $?) { $env:branch_name = git rev-parse --short HEAD }
+        $env:DEPLOY_MESSAGE = $env:DEPLOY_MESSAGE -replace "BRANCH_NAME",$env:branch_name
+
+        $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "BRANCH_NAME",$env:branch_name
+        $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "OS","mingw64" -replace "COMPILER",$env:CC
+
+        cd ..
+        git clone https://$env:PUBLIC_REPO_TOKEN@github.com/nCine/ncline-artifacts.git 2>&1>$null
+        cd ncline-artifacts
+        git checkout $env:DEPLOY_BRANCH; if (-not $?) { git checkout --orphan $env:DEPLOY_BRANCH }
+        git reset
+        git clean -f
+        git rm *
+
+        Move-Item -Path ..\ncline-build-Release\*.tar.gz -Destination .
+        git add *.tar.gz
+
+        git commit --amend -m "$env:DEPLOY_MESSAGE"; if (-not $?) { git commit -m "$env:DEPLOY_MESSAGE" }
+        git push --force; if (-not $?) { git push --set-upstream origin $env:DEPLOY_BRANCH }

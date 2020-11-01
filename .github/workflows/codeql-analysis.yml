@@ -1,0 +1,32 @@
+name: 'CodeQL'
+
+on: [push, workflow_dispatch]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-18.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: ${{ matrix.language }}
+
+    - run: |
+        # CMake Configuration and Make
+        export BuildType=Debug
+
+        cmake -B ../ncline-build-$BuildType -D CMAKE_BUILD_TYPE=$BuildType
+        make -j2 -C ../ncline-build-$BuildType
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1

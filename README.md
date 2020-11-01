@@ -1,3 +1,9 @@
+[![Linux](https://github.com/nCine/ncline/workflows/Linux/badge.svg)](https://github.com/nCine/ncline/actions?workflow=Linux)
+[![macOS](https://github.com/nCine/ncline/workflows/macOS/badge.svg)](https://github.com/nCine/ncline/actions?workflow=macOS)
+[![Windows](https://github.com/nCine/ncline/workflows/Windows/badge.svg)](https://github.com/nCine/ncline/actions?workflow=Windows)
+[![MinGW](https://github.com/nCine/ncline/workflows/MinGW/badge.svg)](https://github.com/nCine/ncline/actions?workflow=MinGW)
+[![CodeQL](https://github.com/nCine/ncline/workflows/CodeQL/badge.svg)](https://github.com/nCine/ncline/actions?workflow=CodeQL)
+
 # ncline
 ncline is the nCine command line tool.  
 A tool to automate the download, configuration and compilation processes for the engine and its accompanying projects.  
@@ -33,9 +39,11 @@ On Linux and MinGW you can use `-gcc` and `-clang` to specify which compiler to 
 If left unspecified then CMake is left alone to pick a suitable compiler.
 On the other supported platforms the compilers are predetermined and can't be changed.
 
-If you want to specify a branch different than `master` when downloading the engine source using Git you can use the `-branch <name>` option:
+If you want to specify a branch other than `master` or a particular tag when downloading the engine source using Git you can use the `-branch <name>` option:
 
-	ncline set -branch develop
+	ncline set -branch 2020.05
+
+This specific branch or tag will also be used when downloading a game project. This will happen to ensure that the project works with that engine version.
 
 In order to specify which game project will be the target of the remaining commands you can use the `-game <name>` option:
 
