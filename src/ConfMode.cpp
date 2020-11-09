@@ -111,7 +111,7 @@ bool prefixPathArg(std::string &cmakeArguments)
 	std::string arguments;
 	const bool argumentsAdded = config().cmakePrefixPath(arguments);
 	if (argumentsAdded)
-		cmakeArguments += " -D CMAKE_PREFIX_PATH=" + arguments;
+		cmakeArguments += " -D CMAKE_PREFIX_PATH=\"" + arguments + "\"";
 
 	return argumentsAdded;
 }
@@ -131,7 +131,7 @@ bool ncineDirArg(std::string &cmakeArguments)
 	std::string arguments;
 	const bool argumentsAdded = config().engineDir(arguments);
 	if (argumentsAdded)
-		cmakeArguments += " -D nCine_DIR=" + arguments;
+		cmakeArguments += " -D nCine_DIR=\"" + arguments + "\"";
 
 	return argumentsAdded;
 }

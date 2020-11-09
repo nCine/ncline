@@ -19,7 +19,10 @@ bool gameNameIsCustom(const std::string &gameName)
 	return (gameName != "ncTemplate" &&
 	        gameName != "ncPong" &&
 	        gameName != "ncInvaders" &&
-	        gameName != "ncParticleEditor");
+	        gameName != "ncParticleEditor" &&
+	        gameName != "ncJugiMapAPIDemo" &&
+	        gameName != "ncJugiMapParallaxScrolling" &&
+	        gameName != "ncJugiMapSpriteTimelineAnimation");
 }
 
 void appendCompilerString(std::string &branchName)
@@ -144,6 +147,9 @@ bool extractArchiveAndDeleteDir(CMakeCommand &cmake, const char *archiveFile, co
 	assert(archiveFile);
 	assert(directory);
 
+	if (*archiveFile == '\0' || *directory == '\0')
+		return false;
+
 	std::string toolCommand = "remove_directory ";
 	toolCommand += directory;
 	bool executed = cmake.toolsMode(toolCommand.data());
@@ -215,6 +221,9 @@ bool extractEngineArchive(GitCommand &git, CMakeCommand& cmake, std::string &arc
 	{
 		// Multiple archives in the branch
 		std::string archiveFiles = git.output();
+		if (archiveFiles.empty())
+			return false;
+
 		size_t firstChar = 0;
 		size_t lastChar = 0;
 		while (firstChar != std::string::npos)
@@ -356,12 +365,7 @@ void downloadGameArtifact(GitCommand &git, CMakeCommand &cmake, const std::strin
 	git.clone(Helpers::gameArtifactsRepositoryUrl(gameName).data(), artifactsBranch(gameName.data()), 1, true);
 	git.checkout(Helpers::gameArtifactsSourceDir(gameName).data(), artifactsBranch(gameName.data()), nullptr);
 
-	// Don' try to extract files from an APK
-	if (config().platform() != Configuration::Platform::ANDROID)
-	{
-		git.customCommand(Helpers::gameArtifactsSourceDir(gameName).data(), "ls-tree -r --name-only HEAD");
-		extractArchiveAndDeleteDir(cmake, git.output().data(), Helpers::gameArtifactsSourceDir(gameName).data());
-	}
+	// Game artifact archives are not automatically extracted
 }
 
 void downloadGame(GitCommand &git, const std::string &gameName)

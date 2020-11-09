@@ -25,7 +25,7 @@ bool ncineDirArg(std::string &cmakeArguments)
 	std::string arguments;
 	const bool argumentsAdded = config().engineDir(arguments);
 	if (argumentsAdded)
-		cmakeArguments += " -D nCine_DIR=" + arguments;
+		cmakeArguments += " -D nCine_DIR=\"" + arguments + "\"";
 
 	return argumentsAdded;
 }
