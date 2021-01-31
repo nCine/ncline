@@ -22,7 +22,9 @@ bool gameNameIsCustom(const std::string &gameName)
 	        gameName != "ncParticleEditor" &&
 	        gameName != "ncJugiMapAPIDemo" &&
 	        gameName != "ncJugiMapParallaxScrolling" &&
-	        gameName != "ncJugiMapSpriteTimelineAnimation");
+	        gameName != "ncJugiMapSpriteTimelineAnimation" &&
+	        gameName != "ncJugiMapGuiDemo" &&
+	        gameName != "ncTiledViewer");
 }
 
 void appendCompilerString(std::string &branchName)
@@ -39,6 +41,7 @@ void appendCompilerString(std::string &branchName)
 	}
 }
 
+#if defined(_WIN32)
 void appendVsString(std::string &branchName)
 {
 	if (config().vsVersion() == 2017)
@@ -46,6 +49,7 @@ void appendVsString(std::string &branchName)
 	else
 		branchName += "-vs2019";
 }
+#endif
 
 void appendAndroidArchString(std::string &branchName)
 {
@@ -212,7 +216,7 @@ void downloadLibraries(GitCommand &git)
 		git.clone(Helpers::nCineLibrariesRepositoryUrl());
 }
 
-bool extractEngineArchive(GitCommand &git, CMakeCommand& cmake, std::string &archiveFile)
+bool extractEngineArchive(GitCommand &git, CMakeCommand &cmake, std::string &archiveFile)
 {
 	assert(config().platform() != Configuration::Platform::EMSCRIPTEN);
 
