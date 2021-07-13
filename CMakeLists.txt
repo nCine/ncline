@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 get_filename_component(PARENT_SOURCE_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
 get_filename_component(PARENT_BINARY_DIR ${CMAKE_BINARY_DIR} DIRECTORY)
 
@@ -23,7 +23,6 @@ target_include_directories(${TARGET_NAME} PRIVATE ${CLIPP_SOURCE_DIR}/include)
 
 include(generated_sources)
 target_sources(${TARGET_NAME} PRIVATE ${GENERATED_SOURCES})
-target_include_directories(${TARGET_NAME} PRIVATE ${PACKAGE_INCLUDE_DIRS})
 if(IS_DIRECTORY ${GENERATED_INCLUDE_DIR})
 	target_include_directories(${TARGET_NAME} PRIVATE ${GENERATED_INCLUDE_DIR})
 endif()

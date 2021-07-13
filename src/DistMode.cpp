@@ -16,7 +16,7 @@ bool devDistEngineArg(std::string &cmakeArguments)
 
 bool devDistGameArg(std::string &cmakeArguments)
 {
-	cmakeArguments += " -D PACKAGE_OPTIONS_PRESETS=BinDist";
+	cmakeArguments += " -D NCPROJECT_OPTIONS_PRESETS=BinDist";
 	return true;
 }
 

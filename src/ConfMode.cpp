@@ -99,7 +99,7 @@ bool gameAndroidArg(std::string &cmakeArguments)
 
 	if (config().platform() == Configuration::Platform::ANDROID)
 	{
-		cmakeArguments += " -D PACKAGE_BUILD_ANDROID=ON -D PACKAGE_ASSEMBLE_APK=ON";
+		cmakeArguments += " -D NCPROJECT_BUILD_ANDROID=ON -D NCPROJECT_ASSEMBLE_APK=ON";
 		argumentsAdded = true;
 	}
 
