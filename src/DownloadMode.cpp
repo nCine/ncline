@@ -44,7 +44,9 @@ void appendCompilerString(std::string &branchName)
 #if defined(_WIN32)
 void appendVsString(std::string &branchName)
 {
-	if (config().vsVersion() == 2017)
+	if (config().vsVersion() == 2022)
+		branchName += "-vs2022";
+	else if (config().vsVersion() == 2017)
 		branchName += "-vs2017";
 	else
 		branchName += "-vs2019";

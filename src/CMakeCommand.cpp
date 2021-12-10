@@ -14,7 +14,9 @@ char buffer[MaxLength];
 #ifdef _WIN32
 const char *vsVersionToGeneratorString(int version)
 {
-	if (version == 2017)
+	if (version == 2022)
+		return "Visual Studio 17 2022";
+	else if (version == 2017)
 		return "Visual Studio 15 2017";
 	else
 		return "Visual Studio 16 2019";

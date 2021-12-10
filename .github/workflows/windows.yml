@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2016, windows-2019]
+        os: [windows-2019, windows-2022]
 
     runs-on: ${{ matrix.os }}
 
@@ -31,8 +31,8 @@ jobs:
       run: |
         $env:generator = switch ("${{ matrix.os }}")
         {
+          "windows-2022" {"Visual Studio 17 2022"}
           "windows-2019" {"Visual Studio 16 2019"}
-          "windows-2016" {"Visual Studio 15 2017"}
         }
 
         cmake -G "$env:generator" -A x64 -B ../ncline-build-Release
@@ -58,8 +58,8 @@ jobs:
 
         $env:vsversion = switch ("${{ matrix.os }}")
         {
+          "windows-2022" {"vs2022"}
           "windows-2019" {"vs2019"}
-          "windows-2016" {"vs2017"}
         }
 
         $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "BRANCH_NAME",$env:branch_name

@@ -36,8 +36,9 @@ bool Settings::parseArguments(int argc, char **argv)
 	                ).doc("(do not) use MinGW/MSYS environment to configure and build"),
 	                (
 	                    option("-vs2017").call([] { config().setVsVersion(2017); }) |
-	                    option("-vs2019").call([] { config().setVsVersion(2019); })
-	                ).doc("prefer Visual Studio 2017 or 2019 to configure and build")).doc("Windows only settings"),
+	                    option("-vs2019").call([] { config().setVsVersion(2019); }) |
+	                    option("-vs2022").call([] { config().setVsVersion(2022); })
+	                ).doc("prefer a specific Visual Studio version to configure and build")).doc("Windows only settings"),
 #endif
 #ifndef __APPLE__
 	                (

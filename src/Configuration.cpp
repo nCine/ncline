@@ -204,10 +204,10 @@ unsigned int Configuration::vsVersion() const
 
 void Configuration::setVsVersion(unsigned int version)
 {
-	if (version != 2019 && version != 2017)
-		cmakeSection_->insert(Names::CMake::vsVersion, 2019);
-	else
+	if (version == 2022 || version == 2019 || version == 2017)
 		cmakeSection_->insert(Names::CMake::vsVersion, version);
+	else
+		cmakeSection_->insert(Names::CMake::vsVersion, 2019);
 }
 
 Configuration::Compiler Configuration::compiler() const
