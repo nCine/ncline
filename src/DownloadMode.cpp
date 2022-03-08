@@ -20,7 +20,7 @@ bool gameNameIsCustom(const std::string &gameName)
 	        gameName != "ncPong" &&
 	        gameName != "ncInvaders" &&
 	        gameName != "ncParticleEditor" &&
-	        gameName != "ncJugiMapAPIDemo" &&
+	        gameName != "ncJugiMapFrameworkDemo" &&
 	        gameName != "ncJugiMapParallaxScrolling" &&
 	        gameName != "ncJugiMapSpriteTimelineAnimation" &&
 	        gameName != "ncJugiMapGuiDemo" &&
