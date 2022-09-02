@@ -27,19 +27,23 @@ jobs:
     - name: 'Checkout Code'
       uses: actions/checkout@v2
 
-    - name: 'Install and Update MSYS2'
+    - name: 'Update MSYS2'
       run: |
-        choco install --no-progress msys2 --params="/InstallDir:C:\msys64 /NoUpdate /NoPath"
-        C:\msys64\usr\bin\pacman --noconfirm -Syy
+        $env:MSYSTEM = "MINGW64"
+
+        C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syyuu'
+        C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syyuu'
 
     - name: 'Install Build Dependencies'
       run: |
-        C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-cmake make
+        $env:MSYSTEM = "MINGW64"
 
-        if ("${{ matrix.CC }}" -eq "gcc") { C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-gcc }
-        else { C:\msys64\usr\bin\pacman --noconfirm -S mingw-w64-x86_64-clang }
+        C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S cmake'
 
-        C:\msys64\usr\bin\pacman --noconfirm -Scc
+        if ("${{ matrix.CC }}" -eq "gcc") { C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-gcc' }
+        else { C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-clang' }
+
+        C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Scc'
 
     - name: 'Unshallow Git Repository for Versioning'
       run: |
@@ -53,7 +57,6 @@ jobs:
         $env:CC = "${{ matrix.CC }}"
         $env:CXX = "${{ matrix.CXX }}"
 
-        $env:PATH = "C:\msys64\usr\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem"
         $env:MSYSTEM = "MINGW64"
 
         C:\msys64\usr\bin\bash.exe -lc 'cmake -G \"MSYS Makefiles\" -B ../ncline-build-Release -D CMAKE_BUILD_TYPE=Release'
@@ -62,15 +65,14 @@ jobs:
       env:
         CHERE_INVOKING: on
       run: |
-       $env:PATH = "C:\msys64\x86_64\bin;C:\msys64\usr\bin;$env:PATH"
        $env:MSYSTEM = "MINGW64"
+
        C:\msys64\usr\bin\bash.exe -lc 'make -j2 -C ../ncline-build-Release'
 
     - name: 'Package'
       env:
         CHERE_INVOKING: on
       run: |
-        $env:PATH = "C:\msys64\usr\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem"
         $env:MSYSTEM = "MINGW64"
 
         C:\msys64\usr\bin\bash.exe -lc 'make package -C ../ncline-build-Release'

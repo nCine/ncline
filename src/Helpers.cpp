@@ -11,6 +11,7 @@
 
 #ifdef _WIN32
 	#define _AMD64_
+	#define NOGDI
 	#include <windef.h>
 	#include <WinBase.h>
 	#include <wincon.h>

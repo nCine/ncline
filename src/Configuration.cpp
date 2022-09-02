@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <limits> // should be included before cpptoml
 #include <cpptoml.h>
 #include "Configuration.h"
 #include "version.h"
