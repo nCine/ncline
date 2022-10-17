@@ -61,6 +61,10 @@ If you need to specify additional CMake arguments when configuring the engine co
 
 	ncline set -cmake-args "-D NCINE_BUILD_TESTS=OFF"
 
+If you need to specify additional CMake arguments when configuring the game compilation you can use the `-game-cmake-args <args>` option:
+
+	ncline set -game-cmake-args "-D NCPROJECT_DATA_DIR=/path/to/data-directory"
+
 #### CMake section
 
 With the `-ninja` and `-no-ninja` options you can choose whether to choose Ninja as a CMake generator or not, providing it is available.

@@ -116,10 +116,20 @@ bool prefixPathArg(std::string &cmakeArguments)
 	return argumentsAdded;
 }
 
-bool additionalArgs(std::string &cmakeArguments)
+bool additionalEngineArgs(std::string &cmakeArguments)
 {
 	std::string arguments;
 	const bool argumentsAdded = config().engineCMakeArguments(arguments);
+	if (argumentsAdded)
+		cmakeArguments += " " + arguments;
+
+	return argumentsAdded;
+}
+
+bool additionalGameArgs(std::string &cmakeArguments)
+{
+	std::string arguments;
+	const bool argumentsAdded = config().gameCMakeArguments(arguments);
 	if (argumentsAdded)
 		cmakeArguments += " " + arguments;
 
@@ -202,7 +212,7 @@ void configureEngine(CMakeCommand &cmake, const Settings &settings)
 	buildTypeArg(arguments, settings);
 	engineAndroidArg(arguments);
 	prefixPathArg(arguments);
-	additionalArgs(arguments);
+	additionalEngineArgs(arguments);
 
 	cmake.configure(Helpers::nCineSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
 }
@@ -226,6 +236,7 @@ void configureGame(CMakeCommand &cmake, const Settings &settings, const std::str
 	buildTypeArg(arguments, settings);
 	gameAndroidArg(arguments);
 	ncineDirArg(arguments);
+	additionalGameArgs(arguments);
 
 	cmake.configure(gameName.data(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
 }

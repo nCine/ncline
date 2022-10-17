@@ -98,6 +98,9 @@ class Configuration
 	bool gameName(std::string &value) const;
 	void setGameName(const std::string &value);
 
+	bool gameCMakeArguments(std::string &value) const;
+	void setGameCMakeArguments(const std::string &value);
+
 	void print() const;
 	void save();
 

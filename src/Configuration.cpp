@@ -42,6 +42,7 @@ namespace nCine {
 	const char *branch = "branch";
 	const char *ncineDir = "ncine_dir";
 	const char *gameName = "game_name";
+	const char *gameCmakeArguments = "game_cmake_arguments";
 }
 
 namespace Android {
@@ -369,6 +370,16 @@ bool Configuration::gameName(std::string &value) const
 void Configuration::setGameName(const std::string &value)
 {
 	ncineSection_->insert(Names::nCine::gameName, value);
+}
+
+bool Configuration::gameCMakeArguments(std::string &value) const
+{
+	return retrieveString(ncineSection_, Names::nCine::gameCmakeArguments, value);
+}
+
+void Configuration::setGameCMakeArguments(const std::string &value)
+{
+	ncineSection_->insert(Names::nCine::gameCmakeArguments, value);
 }
 
 void Configuration::print() const

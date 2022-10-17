@@ -67,7 +67,8 @@ bool Settings::parseArguments(int argc, char **argv)
 	                (option("-cmake-args") & value("args").call([&](const std::string &cmakeArgs) { config().setEngineCMakeArguments(cmakeArgs); })).doc("additional CMake arguments to configure the engine"),
 	                (option("-branch") & value("name").call([&](const std::string &branchName) { config().setBranchName(branchName); })).doc("branch name for engine and projects"),
 	                (option("-ncine-dir") & value("path").call([&](const std::string &directory) { config().setEngineDir(directory); })).doc("path to the CMake script directory inside a compiled or installed engine"),
-	                (option("-game") & value("name").call([&](const std::string &gameName) { config().setGameName(gameName); })).doc("name of the game project")
+	                (option("-game") & value("name").call([&](const std::string &gameName) { config().setGameName(gameName); })).doc("name of the game project"),
+                    (option("-game-cmake-args") & value("args").call([&](const std::string &gameCmakeArgs) { config().setGameCMakeArguments(gameCmakeArgs); })).doc("additional CMake arguments to configure the game")
 	               );
 
 	auto downloadMode = (command("download").set(mode_, Mode::DOWNLOAD).doc("download mode"),
