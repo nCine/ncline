@@ -30,6 +30,19 @@ bool ncineDirArg(std::string &cmakeArguments)
 	return argumentsAdded;
 }
 
+bool releaseBuildTypeArg(std::string &cmakeArguments)
+{
+	bool argumentsAdded = false;
+
+	if (CMakeCommand::generatorIsMultiConfig() == false || config().platform() == Configuration::Platform::ANDROID)
+	{
+		cmakeArguments += " -D CMAKE_BUILD_TYPE=Release";
+		argumentsAdded = true;
+	}
+
+	return argumentsAdded;
+}
+
 void buildReleaseAndPackage(CMakeCommand &cmake, const char *buildDir)
 {
 	assert(buildDir);
@@ -73,6 +86,7 @@ void distributeEngine(CMakeCommand &cmake, const Settings &settings)
 
 	std::string arguments;
 	devDistEngineArg(arguments);
+	releaseBuildTypeArg(arguments);
 
 	cmake.configure(Helpers::nCineSourceDir(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
 	buildReleaseAndPackage(cmake, buildDir.data());
@@ -88,6 +102,7 @@ void distributeGame(CMakeCommand &cmake, const Settings &settings, const std::st
 
 	std::string arguments;
 	devDistGameArg(arguments);
+	releaseBuildTypeArg(arguments);
 	ncineDirArg(arguments);
 
 	cmake.configure(gameName.data(), buildDir.data(), arguments.empty() ? nullptr : arguments.data());
