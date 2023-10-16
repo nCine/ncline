@@ -104,6 +104,24 @@ bool CMakeCommand::generatorIsMultiConfig()
 #endif
 }
 
+const char *CMakeCommand::removeFile()
+{
+	assert(found_);
+	if (Helpers::checkMinVersion(version_, 3, 17, 0))
+		return "rm ";
+	else
+		return "remove ";
+}
+
+const char *CMakeCommand::removeDir()
+{
+	assert(found_);
+	if (Helpers::checkMinVersion(version_, 3, 17, 0))
+		return "rm -r ";
+	else
+		return "remove_directory ";
+}
+
 bool CMakeCommand::toolsMode(const char *command)
 {
 	assert(found_);

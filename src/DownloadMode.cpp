@@ -156,7 +156,7 @@ bool extractArchiveAndDeleteDir(CMakeCommand &cmake, const char *archiveFile, co
 	if (*archiveFile == '\0' || *directory == '\0')
 		return false;
 
-	std::string toolCommand = "remove_directory ";
+	std::string toolCommand = cmake.removeDir();
 	toolCommand += directory;
 	bool executed = cmake.toolsMode(toolCommand.data());
 
@@ -169,7 +169,7 @@ bool extractArchiveAndDeleteDir(CMakeCommand &cmake, const char *archiveFile, co
 
 	if (executed)
 	{
-		toolCommand = "remove ";
+		toolCommand = cmake.removeFile();
 		toolCommand += archiveFile;
 		cmake.toolsMode(toolCommand.data());
 	}
@@ -226,7 +226,7 @@ bool extractEngineArchive(GitCommand &git, CMakeCommand &cmake, std::string &arc
 	if (config().withMinGW() == false)
 	{
 		// Multiple archives in the branch
-		std::string archiveFiles = git.output();
+		std::string archiveFiles = archiveFile;
 		if (archiveFiles.empty())
 			return false;
 
@@ -242,7 +242,7 @@ bool extractEngineArchive(GitCommand &git, CMakeCommand &cmake, std::string &arc
 				break;
 			else
 			{
-				std::string toolCommand = "remove ";
+				std::string toolCommand = cmake.removeFile();
 				toolCommand += archiveFile;
 				cmake.toolsMode(toolCommand.data());
 			}
@@ -254,14 +254,14 @@ bool extractEngineArchive(GitCommand &git, CMakeCommand &cmake, std::string &arc
 #ifndef __APPLE__
 	const bool hasExtracted = extractArchiveAndDeleteDir(cmake, archiveFile.data(), Helpers::nCineArtifactsSourceDir());
 #else
-	std::string command = "remove_directory ";
+	std::string command = cmake.removeDir();
 	command += Helpers::nCineArtifactsSourceDir();
 	cmake.toolsMode(command.data());
 
 	command = "hdiutil convert " + archiveFile + " -format UDTO -o nCine";
 	bool executed = Process::executeCommand(command.data());
 
-	command = "remove " + archiveFile;
+	command = cmake.removeFile() + archiveFile;
 	cmake.toolsMode(command.data());
 	archiveFile = archiveFile.substr(0, archiveFile.find(".dmg"));
 
@@ -278,7 +278,9 @@ bool extractEngineArchive(GitCommand &git, CMakeCommand &cmake, std::string &arc
 			Process::executeCommand(command.data(), Process::Echo::COMMAND_ONLY);
 		}
 
-		cmake.toolsMode("remove nCine.cdr");
+		command = cmake.removeFile();
+		command += "nCine.cdr";
+		cmake.toolsMode(command.data());
 	}
 	const bool hasExtracted = executed;
 #endif
@@ -293,7 +295,24 @@ void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
 
 	git.customCommand(Helpers::nCineArtifactsSourceDir(), "ls-tree -r --name-only HEAD");
 
-	std::string archiveFile = git.output();
+	const std::string &archiveFiles = git.output();
+	// Find the `nCine` archive and delete the `nCineLua` one
+	std::string archiveFile;
+	std::string::size_type pos = 0;
+	std::string::size_type prev = 0;
+	while ((pos = archiveFiles.find('\n', prev)) != std::string::npos)
+	{
+		std::string currentArchiveFile = archiveFiles.substr(prev, pos - prev);
+		if (currentArchiveFile.find("nCine-") == 0)
+			archiveFile += currentArchiveFile + "\n";
+		else
+		{
+			std::string toolCommand = cmake.removeFile();
+			toolCommand += currentArchiveFile;
+			cmake.toolsMode(toolCommand.data());
+		}
+		prev = pos + 1;
+	}
 
 	bool hasExtracted = false;
 	if (config().platform() == Configuration::Platform::EMSCRIPTEN)

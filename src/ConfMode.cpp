@@ -151,7 +151,7 @@ bool cleanBuildDir(CMakeCommand &cmake, const Settings &settings, const std::str
 	if (settings.clean() && fs::isDirectory(buildDir.data()))
 	{
 		Helpers::info("Remove the build directory: ", buildDir.data());
-		std::string cleanCommand = "remove_directory " + buildDir;
+		std::string cleanCommand = cmake.removeDir() + buildDir;
 		bool executed = cmake.toolsMode(cleanCommand.data());
 
 		return executed;
