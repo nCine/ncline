@@ -55,7 +55,7 @@ You can specify the directory that will be passed as `nCine_DIR` to game project
 
 	ncline set -ncine-dir /path/to/nCine-build
 
-If the option is not already specified then it is automatically set after a successful compilation of the engine.
+The option is automatically set after each successful compilation or download of the engine.
 
 If you need to specify additional CMake arguments when configuring the engine compilation you can use the `-cmake-args <args>` option:
 
@@ -78,7 +78,7 @@ On Windows you can also pass the `-vs2017` and `-vs2019` to choose between the V
 If left unspecified the default would be `-vs2019`.
 
 If you need to specify a `CMAKE_PREFIX_PATH` when configuring the engine compilation you can use the `-prefix-path <path>` option.
-If the option is not already specified on Linux then it is automatically set after a successful compilation of the libraries.
+The option is automatically set after each successful compilation or download of the libraries.
 
 #### Android section
 

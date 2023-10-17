@@ -190,19 +190,18 @@ void downloadLibrariesArtifact(GitCommand &git, CMakeCommand &cmake)
 	const bool hasExtracted = extractArchiveAndDeleteDir(cmake, archiveFile.data(), Helpers::nCineLibrariesArtifactsSourceDir());
 
 #if !defined(__APPLE__)
-	if (config().platform() == Configuration::Platform::DESKTOP &&
-	    hasExtracted && config().hasCMakePrefixPath() == false
+	if (config().platform() == Configuration::Platform::DESKTOP && hasExtracted
 	#if defined(_WIN32)
 	    && config().withMinGW()
 	#endif
-	)
+	) // Overwrite `CMAKE_PREFIX_PATH` variable in any case
 	{
 		std::string absolutePath = fs::currentDir();
 		absolutePath = fs::joinPath(absolutePath, Helpers::nCineExternalDir());
 
 		if (fs::isDirectory(absolutePath.data()))
 		{
-			config().setCMakePrefixPath(absolutePath.data());
+			config().setCMakePrefixPath(absolutePath);
 			config().save();
 			Helpers::info("Set 'CMAKE_PREFIX_PATH' CMake variable to: ", absolutePath.data());
 		}
@@ -323,7 +322,7 @@ void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
 	else
 		hasExtracted = extractEngineArchive(git, cmake, archiveFile);
 
-	if (hasExtracted && config().hasEngineDir() == false)
+	if (hasExtracted) // Overwrite `nCine_DIR` variable in any case
 	{
 		std::string absolutePath = fs::currentDir();
 #ifdef _WIN32
@@ -359,7 +358,7 @@ void downloadEngineArtifact(GitCommand &git, CMakeCommand &cmake)
 
 		if (fs::isDirectory(absolutePath.data()))
 		{
-			config().setEngineDir(absolutePath.data());
+			config().setEngineDir(absolutePath);
 			config().save();
 			Helpers::info("Set 'nCine_DIR' CMake variable to: ", absolutePath.data());
 		}

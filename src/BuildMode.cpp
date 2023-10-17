@@ -32,14 +32,14 @@ void buildLibraries(CMakeCommand &cmake, const Settings &settings)
 		hasBuilt = cmake.build(buildDir.data());
 
 #if !defined(_WIN32) && !defined(__APPLE__)
-	if (hasBuilt && config().hasCMakePrefixPath() == false)
+	if (hasBuilt) // Overwrite `CMAKE_PREFIX_PATH` variable in any case
 	{
 		std::string absolutePath = fs::currentDir();
 		absolutePath = fs::joinPath(absolutePath, Helpers::nCineExternalDir());
 
 		if (fs::isDirectory(absolutePath.data()))
 		{
-			config().setCMakePrefixPath(absolutePath.data());
+			config().setCMakePrefixPath(absolutePath);
 			config().save();
 			Helpers::info("Set 'CMAKE_PREFIX_PATH' CMake variable to: ", absolutePath.data());
 		}
@@ -75,13 +75,13 @@ void buildEngine(CMakeCommand &cmake, const Settings &settings)
 	else
 		hasBuilt = cmake.build(buildDir.data());
 
-	if (hasBuilt && config().hasEngineDir() == false)
+	if (hasBuilt) // Overwrite `nCine_DIR` variable in any case
 	{
 		std::string absolutePath = fs::currentDir();
 		absolutePath = fs::joinPath(absolutePath, buildDir);
 		if (fs::isDirectory(absolutePath.data()))
 		{
-			config().setEngineDir(absolutePath.data());
+			config().setEngineDir(absolutePath);
 			config().save();
 			Helpers::info("Set 'nCine_DIR' CMake variable to: ", absolutePath.data());
 		}
