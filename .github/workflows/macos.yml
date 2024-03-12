@@ -13,7 +13,10 @@ jobs:
   macOS:
     strategy:
       fail-fast: false
-    runs-on: 'macOS-11'
+      matrix:
+        os: [macOS-12, macOS-14]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: 'Checkout Code'
@@ -45,7 +48,11 @@ jobs:
         export BRANCH_NAME=$(git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
         export DEPLOY_MESSAGE=`sed 's/BRANCH_NAME/'"$BRANCH_NAME"'/' <<< "$DEPLOY_MESSAGE"`
 
-        export OS=darwin
+        if [[ "${{ matrix.os }}" == "macOS-14" ]]; then
+          export OS=macos14
+        else
+          export OS=macos12
+        fi
         export CC=appleclang
 
         cd ..

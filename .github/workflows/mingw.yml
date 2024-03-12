@@ -38,7 +38,7 @@ jobs:
       run: |
         $env:MSYSTEM = "MINGW64"
 
-        C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S cmake'
+        C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-cmake'
 
         if ("${{ matrix.CC }}" -eq "gcc") { C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-gcc' }
         else { C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-clang' }
@@ -59,7 +59,7 @@ jobs:
 
         $env:MSYSTEM = "MINGW64"
 
-        C:\msys64\usr\bin\bash.exe -lc 'cmake -G \"MSYS Makefiles\" -B ../ncline-build-Release -D CMAKE_BUILD_TYPE=Release'
+        C:\msys64\usr\bin\bash.exe -lc "cmake -G 'MSYS Makefiles' -B ../ncline-build-Release -D CMAKE_BUILD_TYPE=Release"
 
     - name: 'Make'
       env:
