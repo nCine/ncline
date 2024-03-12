@@ -40,7 +40,12 @@ bool Settings::parseArguments(int argc, char **argv)
 	                    option("-vs2022").call([] { config().setVsVersion(2022); })
 	                ).doc("prefer a specific Visual Studio version to configure and build")).doc("Windows only settings"),
 #endif
-#ifndef __APPLE__
+#ifdef __APPLE__
+	                ((
+	                    option("-macos12").call([] { config().setMacosVersion(12); }) |
+	                    option("-macos14").call([] { config().setMacosVersion(14); })
+	                ).doc("prefer a specific macOS version to configure and build")).doc("macOS only settings"),
+#else
 	                (
 	                    option("-gcc").call([] { config().setCompiler(Configuration::Compiler::GCC); }) |
 	                    option("-clang").call([] { config().setCompiler(Configuration::Compiler::CLANG); })

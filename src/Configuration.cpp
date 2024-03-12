@@ -26,6 +26,7 @@ namespace CMake {
 	const char *withNinja = "ninja";
 	const char *withMinGW = "mingw";
 	const char *vsVersion = "vs_version";
+	const char *macosVersion = "macos_version";
 	const char *prefixPath = "prefix_path";
 }
 
@@ -201,7 +202,7 @@ void Configuration::setWithMinGW(bool value)
 
 unsigned int Configuration::vsVersion() const
 {
-	return cmakeSection_->get_as<unsigned int>(Names::CMake::vsVersion).value_or(2019);
+	return cmakeSection_->get_as<unsigned int>(Names::CMake::vsVersion).value_or(2022);
 }
 
 void Configuration::setVsVersion(unsigned int version)
@@ -209,7 +210,20 @@ void Configuration::setVsVersion(unsigned int version)
 	if (version == 2022 || version == 2019 || version == 2017)
 		cmakeSection_->insert(Names::CMake::vsVersion, version);
 	else
-		cmakeSection_->insert(Names::CMake::vsVersion, 2019);
+		cmakeSection_->insert(Names::CMake::vsVersion, 2022);
+}
+
+unsigned int Configuration::macosVersion() const
+{
+	return cmakeSection_->get_as<unsigned int>(Names::CMake::macosVersion).value_or(12);
+}
+
+void Configuration::setMacosVersion(unsigned int version)
+{
+	if (version == 12 || version == 14)
+		cmakeSection_->insert(Names::CMake::macosVersion, version);
+	else
+		cmakeSection_->insert(Names::CMake::macosVersion, 12);
 }
 
 Configuration::Compiler Configuration::compiler() const

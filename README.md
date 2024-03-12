@@ -74,8 +74,11 @@ If left unspecified the default would be `-no-ninja`.
 On Windows you can pass the `-mingw` and `-no-mingw` options to choose whether to build for MinGW/MSYS or not.
 If left unspecified the default would be `-no-mingw`.
 
-On Windows you can also pass the `-vs2017` and `-vs2019` to choose between the Visual Studio 2017 and 2019 CMake generators.
-If left unspecified the default would be `-vs2019`.
+On Windows you can also pass the `-vs2017`, `-vs2019`, or `-vs2022` options to build (or download artifacts) for a specific Visual Studio version.
+If left unspecified the default would be `-vs2022`.
+
+On macOS you can pass the `-macos12` or `-macos14` options to build (or download artifacts) for a specific macOS version.
+If left unspecified the default would be `-macos12`.
 
 If you need to specify a `CMAKE_PREFIX_PATH` when configuring the engine compilation you can use the `-prefix-path <path>` option.
 The option is automatically set after each successful compilation or download of the libraries.

@@ -46,10 +46,24 @@ void appendVsString(std::string &branchName)
 {
 	if (config().vsVersion() == 2022)
 		branchName += "-vs2022";
+	else if (config().vsVersion() == 2019)
+		branchName += "-vs2019";
 	else if (config().vsVersion() == 2017)
 		branchName += "-vs2017";
 	else
 		branchName += "-vs2019";
+}
+#endif
+
+#if defined(__APPLE__)
+void appendMacosString(std::string &branchName)
+{
+	if (config().macosVersion() == 14)
+		branchName += "-macos14";
+	else if (config().macosVersion() == 12)
+		branchName += "-macos12";
+	else
+		branchName += "-macos12";
 }
 #endif
 
@@ -83,7 +97,9 @@ const char *librariesArtifactsBranch()
 	else
 	{
 #if defined(__APPLE__)
-		branchName = "libraries-darwin-appleclang";
+		branchName = "libraries";
+		appendMacosString(branchName);
+		branchName += "-appleclang";
 #elif defined(_WIN32)
 		if (config().withMinGW())
 		{
@@ -127,7 +143,8 @@ const char *artifactsBranch(const char *project)
 	else
 	{
 #if defined(__APPLE__)
-		branchName += "-darwin-appleclang";
+		appendMacosString(branchName);
+		branchName += "-appleclang";
 #elif defined(_WIN32)
 		if (config().withMinGW())
 		{

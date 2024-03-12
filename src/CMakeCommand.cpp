@@ -16,10 +16,24 @@ const char *vsVersionToGeneratorString(int version)
 {
 	if (version == 2022)
 		return "Visual Studio 17 2022";
+	else if (version == 2019)
+		return "Visual Studio 16 2019";
 	else if (version == 2017)
 		return "Visual Studio 15 2017";
 	else
-		return "Visual Studio 16 2019";
+		return "Visual Studio 17 2022";
+}
+#endif
+
+#ifdef __APPLE__
+const char *macosVersionToDeploymentTarget(int version)
+{
+	if (version == 14)
+		return "CMAKE_OSX_DEPLOYMENT_TARGET=14";
+	else if (version == 12)
+		return "CMAKE_OSX_DEPLOYMENT_TARGET=12";
+	else
+		return "CMAKE_OSX_DEPLOYMENT_TARGET=12";
 }
 #endif
 
@@ -155,6 +169,11 @@ bool CMakeCommand::configure(const char *srcDir, const char *binDir, const char 
 			snprintf(buffer, MaxLength, " -G \"%s\"", generator);
 		configureCommand += buffer;
 	}
+
+#ifdef __APPLE__
+	snprintf(buffer, MaxLength, " -D %s", macosVersionToDeploymentTarget(config().macosVersion()));
+	configureCommand += buffer;
+#endif
 
 	if (arguments)
 	{

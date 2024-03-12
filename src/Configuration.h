@@ -65,6 +65,9 @@ class Configuration
 	unsigned int vsVersion() const;
 	void setVsVersion(unsigned int version);
 
+	unsigned int macosVersion() const;
+	void setMacosVersion(unsigned int version);
+
 	Compiler compiler() const;
 	void setCompiler(Compiler compiler);
 
