@@ -5,12 +5,10 @@ on: [push, workflow_dispatch]
 jobs:
   analyze:
     name: 'Analyze'
-    runs-on: 'ubuntu-22.04'
+    runs-on: 'ubuntu-24.04'
 
     strategy:
       fail-fast: false
-      matrix:
-        language: [ 'cpp' ]
 
     steps:
     - name: 'Checkout Repository'
@@ -19,14 +17,14 @@ jobs:
     - name: 'Initialize CodeQL'
       uses: github/codeql-action/init@v1
       with:
-        languages: ${{ matrix.language }}
+        languages: 'cpp'
 
     - run: |
         # CMake Configuration and Make
         export BuildType=Debug
 
         cmake -B ../ncline-build-$BuildType -D CMAKE_BUILD_TYPE=$BuildType
-        make -j2 -C ../ncline-build-$BuildType
+        make -j $(getconf _NPROCESSORS_ONLN) -C ../ncline-build-$BuildType
 
     - name: 'Perform CodeQL Analysis'
       uses: github/codeql-action/analyze@v1

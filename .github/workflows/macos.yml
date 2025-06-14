@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-13, macOS-14]
+        os: [macOS-13, macOS-15]
 
     runs-on: ${{ matrix.os }}
 
@@ -32,7 +32,7 @@ jobs:
 
     - name: 'Make'
       run: |
-        make -j2 -C ../ncline-build-Release
+        make -j $(getconf _NPROCESSORS_ONLN) -C ../ncline-build-Release
 
     - name: 'Package'
       run: |
@@ -48,8 +48,8 @@ jobs:
         export BRANCH_NAME=$(git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
         export DEPLOY_MESSAGE=`sed 's/BRANCH_NAME/'"$BRANCH_NAME"'/' <<< "$DEPLOY_MESSAGE"`
 
-        if [[ "${{ matrix.os }}" == "macOS-14" ]]; then
-          export OS=macos14
+        if [[ "${{ matrix.os }}" == "macOS-15" ]]; then
+          export OS=macos15
         else
           export OS=macos13
         fi
