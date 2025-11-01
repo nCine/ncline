@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-13, macOS-15]
+        os: [macOS-15, macOS-15-intel]
 
     runs-on: ${{ matrix.os }}
 
@@ -51,7 +51,7 @@ jobs:
         if [[ "${{ matrix.os }}" == "macOS-15" ]]; then
           export OS=macos15
         else
-          export OS=macos13
+          export OS=macos15-intel
         fi
         export CC=appleclang
 
