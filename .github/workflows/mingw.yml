@@ -1,27 +1,30 @@
 name: 'MinGW'
 
 env:
-  DEPLOY_MESSAGE:
-    "Push artifact from GitHub Actions build ${{ github.run_number }} with id ${{ github.run_id }}
+  DEPLOY_MESSAGE: |
+    Push artifact from GitHub Actions build ${{ github.run_number }} with id ${{ github.run_id }}
 
-     - ncline artifact from branch 'BRANCH_NAME' with commit id ${{ github.sha }}"
+    - ncline artifact from branch 'BRANCH_NAME' with commit id ${{ github.sha }}
   DEPLOY_BRANCH: ncline-BRANCH_NAME-OS-COMPILER
 
 on: [push, workflow_dispatch]
 
 jobs:
-  MinGW:
+  Build:
     strategy:
       fail-fast: false
       matrix:
         include:
-        - CC: gcc
-          CXX: g++
-
-        - CC: clang
-          CXX: clang++
+          - compiler: gcc
+            CC: gcc
+            CXX: g++
+          - compiler: clang
+            CC: clang
+            CXX: clang++
 
     runs-on: 'windows-2022'
+    env:
+      MSYSTEM: MINGW64
 
     steps:
     - name: 'Checkout Code'
@@ -29,15 +32,11 @@ jobs:
 
     - name: 'Update MSYS2'
       run: |
-        $env:MSYSTEM = "MINGW64"
-
         C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syyuu'
         C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -Syyuu'
 
     - name: 'Install Build Dependencies'
       run: |
-        $env:MSYSTEM = "MINGW64"
-
         C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-cmake make patch'
 
         if ("${{ matrix.CC }}" -eq "gcc") { C:\msys64\usr\bin\bash -lc 'pacman --needed --noconfirm -S mingw-w64-x86_64-gcc' }
@@ -57,25 +56,49 @@ jobs:
         $env:CC = "${{ matrix.CC }}"
         $env:CXX = "${{ matrix.CXX }}"
 
-        $env:MSYSTEM = "MINGW64"
-
         C:\msys64\usr\bin\bash.exe -lc "cmake -G 'MSYS Makefiles' -B ../ncline-build-Release -D CMAKE_BUILD_TYPE=Release"
 
     - name: 'Make'
       env:
         CHERE_INVOKING: on
       run: |
-       $env:MSYSTEM = "MINGW64"
-
        C:\msys64\usr\bin\bash.exe -lc 'make -j $NUMBER_OF_PROCESSORS -C ../ncline-build-Release'
 
     - name: 'Package'
       env:
         CHERE_INVOKING: on
       run: |
-        $env:MSYSTEM = "MINGW64"
-
         C:\msys64\usr\bin\bash.exe -lc 'make package -C ../ncline-build-Release'
+
+    - name: 'Prepare Manifest'
+      run: |
+        cd ../ncline-build-Release
+
+        Set-Content -Path package_file_name.cmake -Value 'include(CPackConfig.cmake)','execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "${CPACK_PACKAGE_FILE_NAME}")'
+        $package_file_name = cmake -P package_file_name.cmake
+        $package_ext = "tar.gz"
+        $package = "$package_file_name.$package_ext"
+
+        # Generate a JSON manifest file
+        $manifest = "manifest.json"
+
+        $packageInfo = Get-Item $package
+        $packageHash = (Get-FileHash -Algorithm SHA256 -Path $package).Hash.ToLower()
+
+        $manifestObj = [ordered]@{
+          filename = $package
+          size     = $packageInfo.Length
+          timestamp = $packageInfo.LastWriteTimeUtc.ToString("yyyy-MM-ddTHH:mm:ssZ")
+          sha256   = $packageHash
+          git_revision = $env:GITHUB_SHA
+        }
+
+        $manifestObj |
+          ConvertTo-Json -Depth 4 |
+          Set-Content -Encoding UTF8 $manifest
+
+        Write-Host "Contents of the manifest file:"
+        Get-Content $manifest -Raw
 
     - name: 'Push Artifacts'
       env:
@@ -85,24 +108,25 @@ jobs:
         git config --global user.name "GitHub Actions"
         $env:GIT_REDIRECT_STDERR = '2>&1'
 
-        $env:CC = "${{ matrix.CC }}"
+        $CC = "${{ matrix.CC }}"
 
-        $env:branch_name = git describe --tags --exact-match; if (-not $?) { $env:branch_name = git symbolic-ref -q --short HEAD }; if (-not $?) { $env:branch_name = git rev-parse --short HEAD }
-        $env:DEPLOY_MESSAGE = $env:DEPLOY_MESSAGE -replace "BRANCH_NAME",$env:branch_name
+        $branch_name = git describe --tags --exact-match; if (-not $?) { $branch_name = git symbolic-ref -q --short HEAD }; if (-not $?) { $branch_name = git rev-parse --short HEAD }
+        $env:DEPLOY_MESSAGE = $env:DEPLOY_MESSAGE -creplace "BRANCH_NAME",$branch_name
 
-        $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "BRANCH_NAME",$env:branch_name
-        $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -replace "OS","mingw64" -replace "COMPILER",$env:CC
+        $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -creplace "BRANCH_NAME",$branch_name
+        $env:DEPLOY_BRANCH = $env:DEPLOY_BRANCH -creplace "OS","mingw64" -creplace "COMPILER",$CC
 
         cd ..
         git clone https://$env:PUBLIC_REPO_TOKEN@github.com/nCine/ncline-artifacts.git 2>&1>$null
+
         cd ncline-artifacts
         git checkout $env:DEPLOY_BRANCH; if (-not $?) { git checkout --orphan $env:DEPLOY_BRANCH }
         git reset
         git clean -f
         git rm *
-
+        Move-Item -Path ..\ncline-build-Release\manifest.json -Destination .
         Move-Item -Path ..\ncline-build-Release\*.tar.gz -Destination .
-        git add *.tar.gz
 
+        git add manifest.json *.tar.gz
         git commit --amend -m "$env:DEPLOY_MESSAGE"; if (-not $?) { git commit -m "$env:DEPLOY_MESSAGE" }
         git push --force; if (-not $?) { git push --set-upstream origin $env:DEPLOY_BRANCH }

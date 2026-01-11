@@ -1,25 +1,26 @@
 name: 'Linux'
 
 env:
-  DEPLOY_MESSAGE:
-    "Push artifact from GitHub Actions build ${{ github.run_number }} with id ${{ github.run_id }}
+  DEPLOY_MESSAGE: |
+    Push artifact from GitHub Actions build ${{ github.run_number }} with id ${{ github.run_id }}
 
-     - ncline artifact from branch 'BRANCH_NAME' with commit id ${{ github.sha }}"
+    - ncline artifact from branch 'BRANCH_NAME' with commit id ${{ github.sha }}
   DEPLOY_BRANCH: ncline-BRANCH_NAME-OS-COMPILER
 
 on: [push, workflow_dispatch]
 
 jobs:
-  Linux:
+  Build:
     strategy:
       fail-fast: false
       matrix:
         include:
-        - CC: gcc
-          CXX: g++
-
-        - CC: clang
-          CXX: clang++
+          - compiler: gcc
+            CC: gcc
+            CXX: g++
+          - compiler: clang
+            CC: clang
+            CXX: clang++
 
     runs-on: 'ubuntu-24.04'
 
@@ -46,6 +47,34 @@ jobs:
       run: |
         make package -C ../ncline-build-Release
 
+    - name: 'Prepare Manifest'
+      run: |
+        cd ../ncline-build-Release/
+
+        echo -e "include(CPackConfig.cmake)\nexecute_process(COMMAND \${CMAKE_COMMAND} -E echo_append \"\${CPACK_PACKAGE_FILE_NAME}\")" > package_file_name.cmake
+        PACKAGE_FILE_NAME=$(cmake -P package_file_name.cmake)
+        PACKAGE_EXT=tar.gz
+        PACKAGE="$PACKAGE_FILE_NAME.$PACKAGE_EXT"
+
+        # Generate a JSON manifest file
+        SIZE=$(stat -c %s "$PACKAGE")
+        MTIME=$(stat -c %y "$PACKAGE")
+        MTIME_ISO=$(date -u -d "$MTIME" +"%Y-%m-%dT%H:%M:%SZ")
+        SHA256=$(sha256sum "$PACKAGE" | awk '{print $1}')
+
+        cat > "manifest.json" <<EOF
+        {
+          "filename": "$PACKAGE",
+          "size": $SIZE,
+          "timestamp": "$MTIME_ISO",
+          "sha256": "$SHA256",
+          "git_revision": "$GITHUB_SHA"
+        }
+        EOF
+
+        echo "Contents of the manifest file:"
+        cat manifest.json
+
     - name: 'Push Artifacts'
       env:
         PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
@@ -53,24 +82,26 @@ jobs:
         git config --global user.email "actions@github.com"
         git config --global user.name "GitHub Actions"
 
-        export BRANCH_NAME=$(git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
-        export DEPLOY_MESSAGE=`sed 's/BRANCH_NAME/'"$BRANCH_NAME"'/' <<< "$DEPLOY_MESSAGE"`
+        BRANCH_NAME=$(git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
+        DEPLOY_MESSAGE=`sed 's/BRANCH_NAME/'"$BRANCH_NAME"'/' <<< "$DEPLOY_MESSAGE"`
 
-        export OS=linux
-        export CC=${{ matrix.CC }}
+        OS=linux
+        CC=${{ matrix.CC }}
 
         cd ..
-        export DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/BRANCH_NAME/'"$BRANCH_NAME"'/'`
-        export DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/OS/'"$OS"'/'`
-        export DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/COMPILER/'"$CC"'/'`
+        DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/BRANCH_NAME/'"$BRANCH_NAME"'/'`
+        DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/OS/'"$OS"'/'`
+        DEPLOY_BRANCH=`echo $DEPLOY_BRANCH | sed 's/COMPILER/'"$CC"'/'`
         git clone https://$PUBLIC_REPO_TOKEN@github.com/$GITHUB_REPOSITORY-artifacts.git >/dev/null 2>&1
-        cd ncline-artifacts
 
+        cd ncline-artifacts
         git checkout $DEPLOY_BRANCH || git checkout --orphan $DEPLOY_BRANCH
         git reset
         git clean -f
         git rm * || true
+        mv -f ../ncline-build-Release/manifest.json .
         mv -f ../ncline-build-Release/*.tar.gz .
-        git add *.tar.gz
+
+        git add manifest.json *.tar.gz
         git commit --amend -m "$DEPLOY_MESSAGE" || git commit -m "$DEPLOY_MESSAGE"
         git push --force || git push --set-upstream origin $DEPLOY_BRANCH
